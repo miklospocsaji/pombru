@@ -4,6 +4,8 @@ import logging
 import threading
 from time import sleep
 
+import utils
+
 class BrewTask(object):
     "Describes a task during brewing."
     SET_MASH_VALVE_TARGET_MASH = "SET_MASH_VALVE_TARGET_MASH"
@@ -30,6 +32,36 @@ class BrewTask(object):
 
     def __str__(self):
         return "BrewTask(" + self.event + ", " + str(self.param) + ")"
+
+Stage = utils.enum(
+    "INITIAL",
+    "MASHING_1",
+    "MASHING_2",
+    "MASHING_3",
+    "MASHING_4",
+    "SPARGE_MASH_TO_TEMP_1",
+    "SPARGE_BOIL_TO_MASH_1",
+    "SPARGE_MASH_TO_TEMP_2",
+    "SPARGE_BOIL_TO_MASH_2",
+    "SPARGE_MASH_TO_TEMP_3",
+    "TEMP_TO_BOIL",
+    "BOIL"
+)
+
+StageNames = {
+    Stage.INITIAL: "Initial stage",
+    Stage.MASHING_1: "Mashing - step I.",
+    Stage.MASHING_2: "Mashing - step II.",
+    Stage.MASHING_3: "Mashing - step III.",
+    Stage.MASHING_4: "Mashing - step IV.",
+    Stage.SPARGE_MASH_TO_TEMP_1: "Sparging - transferring wort to temporary I.",
+    Stage.SPARGE_BOIL_TO_MASH_1: "Sparging - transferring water to mashing tun I.",
+    Stage.SPARGE_MASH_TO_TEMP_2: "Sparging - transferring wort to temporary II.",
+    Stage.SPARGE_BOIL_TO_MASH_2: "Sparging - transferring water to mashing tun II.",
+    Stage.SPARGE_MASH_TO_TEMP_3: "Sparging - transferring wort to temporary II.",
+    Stage.TEMP_TO_BOIL: "Transferring wort to boiling kettle",
+    Stage.BOIL: "Boiling wort"
+}
 
 class BrewProcess(object):
     "Manages a process of the whole brewing."
@@ -181,3 +213,6 @@ class BrewProcess(object):
 
     def _boil_finished(self):
         self.actor.task(BrewTask(BrewTask.STOP_BOIL_KETTLE))
+
+if __name__ == "__main__":
+    print StageNames
