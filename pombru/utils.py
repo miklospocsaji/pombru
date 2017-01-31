@@ -10,7 +10,8 @@ def enum(*args):
     return type("Enum", (), values)
 
 class PausableTimer(object):
-    "Timer which can be paused and resumed if not already fired"
+    """Timer which can be paused and resumed if not already fired.
+    The callback will receive the timer instance before all the other parameters."""
 
     State = enum('CREATED', 'STARTED', 'PAUSED', 'CANCELLED', 'FINISHED')
 
@@ -32,7 +33,7 @@ class PausableTimer(object):
                 self._state = PausableTimer.State.FINISHED
                 start = True
         if start:
-            self._callback(self._args, self._kwargs)
+            self._callback(self._timer, self._args, self._kwargs)
 
     def start(self):
         if self._state != PausableTimer.State.CREATED:
@@ -67,6 +68,15 @@ class PausableTimer(object):
 
     def get_state(self):
         return self._state
+
+    def remaining(self):
+        with self._lock:
+            if self._state == PausableTimer.State.STARTED:
+                return self._orig_timeout - (time.time() - self._started_at)
+            elif self._state == PausableTimer.State.PAUSED:
+                return self._orig_timeout - (self._paused_at - self._started_at)
+            else:
+                return -1
 
 if __name__ == "__main__":
     def callback():

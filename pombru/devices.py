@@ -25,6 +25,12 @@ class TwoWayValve(object):
         else:
             return super.__getattr__(attr)
 
+    def set_direction(self, direction):
+        if direction == self._off_name:
+            self._relay_off()
+        elif direction == self._on_name:
+            self._relay_on()
+
 class Heater(object):
     """Class represents a heater.
 
