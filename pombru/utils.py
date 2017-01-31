@@ -15,7 +15,7 @@ class PausableTimer(object):
 
     State = enum('CREATED', 'STARTED', 'PAUSED', 'CANCELLED', 'FINISHED')
 
-    def __init__(self, timeout, callback, *args, **kwargs):
+    def __init__(self, timeout, callback, name=None, *args, **kwargs):
         self._timer = threading.Timer(timeout, self._callback_wrapper, args, kwargs)
         self._orig_timeout = timeout
         self._callback = callback
@@ -25,6 +25,7 @@ class PausableTimer(object):
         self._started_at = None
         self._paused_at = None
         self._lock = threading.RLock()
+        self.name = name
     
     def _callback_wrapper(self, *args, **kwargs):
         start = False
