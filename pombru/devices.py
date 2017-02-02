@@ -1,35 +1,50 @@
 "Represents Pombru devices: Pumps, Valves and JamMakers."
 
 import threading
+import time
 from lowlevel import Relay, Thermistor
 
 class TwoWayValve(object):
-    "Class represents a valve which can flow liquid in two directions."
+    """Class represents a valve which can flow liquid in two directions.
+    The valve is operated by two relay which engage the 12V in opposite polarity
+    to the valve. For the changes to take effect, the current must flow for
+    a predefined amount of time.
+    The two directions can be set a name and the object will expose two functions
+    with this name.
+    """
 
-    def __init__(self, pin, direction_when_off, direction_when_on):
-        self._relay = Relay(pin)
-        self._off_name = direction_when_off
-        self._on_name = direction_when_on
-        def off_func():
-            self._relay.off()
-        self._off_func = off_func
-        def on_func():
-            self._relay.on()
-        self._on_func = on_func
+    _DEFAULT_SETTLE_TIME = 2
+
+    def __init__(self, direction_1_pin, direction_2_pin, direction_1_name=None, direction_2_name=None, settle_time=None):
+        self._relay_1 = Relay(direction_1_pin)
+        self._relay_2 = Relay(direction_2_pin)
+        self._direction_1_name = direction_1_name
+        self._direction_2_name = direction_2_name
+        if settle_time is None:
+            settle_time = TwoWayValve._DEFAULT_SETTLE_TIME
+        self._settle_time = settle_time
+
+    def direction_1(self):
+        "Moves the valve to direction 1. This method blocks while waiting for the valve to settle."
+        self._relay_1.on()
+        time.sleep(self._settle_time)
+        self._relay_1.off()
+
+    def direction_2(self):
+        "Moves the valve to direction 2. This method blocks while waiting for the valve to settle."
+        self._relay_2.on()
+        time.sleep(self._settle_time)
+        self._relay_2.off()
 
     def __getattr__(self, attr):
-        if attr == self._off_name:
-            return self._off_func
-        elif attr == self._on_name:
-            return self._on_func
+        if attr is None:
+            return None
+        if attr == self._direction_1_name:
+            return self.direction_1
+        elif attr == self._direction_2_name:
+            return self.direction_2
         else:
             return super.__getattr__(attr)
-
-    def set_direction(self, direction):
-        if direction == self._off_name:
-            self._relay_off()
-        elif direction == self._on_name:
-            self._relay_on()
 
 class Heater(object):
     """Class represents a heater.

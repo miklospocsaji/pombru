@@ -34,22 +34,25 @@ class BrewTask(object):
         return "BrewTask(" + self.event + ", " + str(self.param) + ")"
 
 class BrewStages(object):
-    "(Name, mash stage, next stage) tuples."
-    BOIL = ("Boiling wort", 0, None)
-    TEMP_TO_BOIL = ("Transferring wort to boiling kettle", 0, BOIL)
-    SPARGE_MASH_TO_TEMP_3 = ("Sparging - transferring wort to temporary III.", 0, TEMP_TO_BOIL)
-    SPARGE_CIRCULATE_IN_MASH_2 = ("Sparging - circulating in mash tun II.", 0, SPARGE_MASH_TO_TEMP_3)
-    SPARGE_BOIL_TO_MASH_2 = ("Sparging - transferring water to mashing tun II.", 0, SPARGE_CIRCULATE_IN_MASH_2)
-    SPARGE_MASH_TO_TEMP_2 = ("Sparging - transferring wort to temporary II.", 0, SPARGE_BOIL_TO_MASH_2)
-    SPARGE_CIRCULATE_IN_MASH_1 = ("Sparging - circulating in mash tun I.", 0, SPARGE_MASH_TO_TEMP_2)
-    SPARGE_BOIL_TO_MASH_1 = ("Sparging - transferring water to mashing tun I.", 0, SPARGE_CIRCULATE_IN_MASH_1)
-    SPARGE_MASH_TO_TEMP_1 = ("Sparging - transferring wort to temporary I.", 0, SPARGE_BOIL_TO_MASH_1)
-    WAIT_FOR_SPARGING_WATER = ("Waiting for the sparging water to heat up", 0, SPARGE_MASH_TO_TEMP_1)
-    MASHING_4 = ("Mashing - step IV.", 4, WAIT_FOR_SPARGING_WATER)
-    MASHING_3 = ("Mashing - step III.", 3, MASHING_4)
-    MASHING_2 = ("Mashing - step II.", 2, MASHING_3)
-    MASHING_1 = ("Mashing - step I.", 1, MASHING_2)
-    INITIAL = ("Initial stage", 0, MASHING_1)
+    "Name, mash stage, next stage."
+    KEY_NAME = "name"
+    KEY_MASH_STAGE_NUM = "mash"
+    KEY_NEXT_STAGE = "next"
+    BOIL = {KEY_NAME: "Boiling wort", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: None}
+    SPARGE_TEMP_TO_BOIL = {KEY_NAME: "Transferring wort to boiling kettle", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: BOIL}
+    SPARGE_MASH_TO_TEMP_3 = {KEY_NAME: "Sparging - transferring wort to temporary III.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_TEMP_TO_BOIL}
+    SPARGE_CIRCULATE_IN_MASH_2 = {KEY_NAME: "Sparging - circulating in mash tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_3}
+    SPARGE_BOIL_TO_MASH_2 = {KEY_NAME: "Sparging - transferring water to mashing tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_CIRCULATE_IN_MASH_2}
+    SPARGE_MASH_TO_TEMP_2 = {KEY_NAME: "Sparging - transferring wort to temporary II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_BOIL_TO_MASH_2}
+    SPARGE_CIRCULATE_IN_MASH_1 = {KEY_NAME: "Sparging - circulating in mash tun I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_2}
+    SPARGE_BOIL_TO_MASH_1 = {KEY_NAME: "Sparging - transferring water to mashing tun I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_CIRCULATE_IN_MASH_1}
+    SPARGE_MASH_TO_TEMP_1 = {KEY_NAME: "Sparging - transferring wort to temporary I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_BOIL_TO_MASH_1}
+    WAIT_FOR_SPARGING_WATER = {KEY_NAME: "Waiting for the sparging water to heat up", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_1}
+    MASHING_4 = {KEY_NAME: "Mashing - step IV.", KEY_MASH_STAGE_NUM: 4, KEY_NEXT_STAGE: WAIT_FOR_SPARGING_WATER}
+    MASHING_3 = {KEY_NAME: "Mashing - step III.", KEY_MASH_STAGE_NUM: 3, KEY_NEXT_STAGE: MASHING_4}
+    MASHING_2 = {KEY_NAME: "Mashing - step II.", KEY_MASH_STAGE_NUM: 2, KEY_NEXT_STAGE: MASHING_3}
+    MASHING_1 = {KEY_NAME: "Mashing - step I.", KEY_MASH_STAGE_NUM: 1, KEY_NEXT_STAGE: MASHING_2}
+    INITIAL = {KEY_NAME: "Initial stage", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: MASHING_1}
 
 
 class BrewProcess(object):
@@ -73,6 +76,7 @@ class BrewProcess(object):
     _TIMER_START_SPARGE_HEAT = "_TIMER_START_SPARGE_HEAT"
     _TIMER_MASH = "_TIMER_MASH"
     _TIMER_BOIL = "_TIMER_BOIL"
+    _TIMER_SPARGING = "_TIMER_SPARGING"
 
     def _set_valves_and_pumps(self, mash_pump=False, temp_pump=False, boil_pump=False, mash_valve=_MASH_VALVE_TO_MASH, boil_valve=_BOIL_VALVE_TO_MASH):
         events = []
@@ -80,12 +84,8 @@ class BrewProcess(object):
         events.append(BrewTask(BrewTask.STOP_MASH_PUMP))
         events.append(BrewTask(BrewTask.STOP_TEMP_PUMP))
         events.append(BrewTask(BrewTask.STOP_BOIL_PUMP))
-        for event in events:
-            self.actor.task(event)
-        sleep(0.5)
 
         # Set valves
-        events = []
         if mash_valve == BrewProcess._MASH_VALVE_TO_MASH:
             events.append(BrewTask(BrewTask.SET_MASH_VALVE_TARGET_MASH))
         elif mash_valve == BrewProcess._MASH_VALVE_TO_TEMP:
@@ -98,14 +98,8 @@ class BrewProcess(object):
             events.append(BrewTask(BrewTask.SET_BOIL_VALVE_TARGET_TEMP))
         else:
             raise ValueError("Invalid value for boil_valve: " + str(boil_valve))
-        for event in events:
-            self.actor.task(event)
-
-        # Sleep 1 second to settle the valves
-        sleep(1)
 
         # Set pumps
-        events = []
         if mash_pump:
             events.append(BrewTask(BrewTask.START_MASH_PUMP))
         else:
@@ -136,15 +130,20 @@ class BrewProcess(object):
         self._sparging_water_ready = False
 
     def _next_stage(self, stage):
-        _, _, next_stage = stage
-        _, mashstage, _ = next_stage
+        next_stage = stage["next"]
+        mashstage = next_stage["mash"]
         if mashstage > len(self.recipe.mash_stages):
             # This mash stage is not defined in the recipe
-            return BrewStages.MASHING_4[2]
+            return BrewStages.MASHING_4["next"]
         return next_stage
 
+    #################################################
+    ## State machine
+    #################################################
     def _enter_stage(self, stage):
-        _, mashstage, _ = stage
+        halfsparge_pump_time = self.recipe.sparge_water / 2.0 * BrewProcess._PUMP_SECONDS_PER_LITER
+        mash_pump_time = self.recipe.mash_water * BrewProcess._PUMP_SECONDS_PER_LITER
+        mashstage = stage["mash"]
         if stage == BrewStages.INITIAL:
             raise ValueError("Initial is not a valid stage to resume to.")
         elif mashstage > 0:
@@ -152,20 +151,30 @@ class BrewProcess(object):
         elif stage == BrewStages.WAIT_FOR_SPARGING_WATER:
             # It is possible that sparging water is already hot enough
             if self._sparging_water_ready:
-                self._enter_stage(stage[2])
+                self._enter_stage(stage["next"])
+                return # to avoid setting the brewing stage at the end...
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_1:
-            self._set_valves_and_pumps(mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
-            timer = utils.PausableTimer(self.recipe.mash_water * BrewProcess._PUMP_SECONDS_PER_LITER, self._sparging_stage_done, name=_TIMER_SPARGING, [stage[2]])
-            self._timers.append(timer)
-            timer.start()
+            self._sparge(mash_pump_time, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+        elif stage == BrewStages.SPARGE_BOIL_TO_MASH_1:
+            self._sparge(halfsparge_pump_time, boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
+        elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_1:
+            self._sparge(60, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH)
+        elif stage == BrewStages.SPARGE_MASH_TO_TEMP_2:
+            self._sparge(halfsparge_pump_time, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+        elif stage == BrewStages.SPARGE_BOIL_TO_MASH_2:
+            self._sparge(halfsparge_pump_time, boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
+        elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_2:
+            self._sparge(60, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH)
+        elif stage == BrewStages.SPARGE_MASH_TO_TEMP_3:
+            self._sparge(halfsparge_pump_time, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+        elif stage == BrewStages.SPARGE_TEMP_TO_BOIL:
+            self._sparge(2 * halfsparge_pump_time + mash_pump_time, temp_pump=True)
+        elif stage == BrewStages.BOIL:
+            self._stop_all()
+            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, 100))
+        else:
+            raise ValueError("Unhandled target stage:" + stage["name"])
         self._brewing_stage = stage
-
-    def _mash(self, step):
-        if step > len(self.recipe.mash_stages):
-            raise ValueError("Mashing step " + str(step) + " is not defined in recipe!")
-        temp, _ = self.recipe.mash_stages[step - 1]
-        self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, temp))
-        self._set_valves_and_pumps(mash_pump=True)
 
     def start(self):
         "Starts the brewing process."
@@ -192,7 +201,7 @@ class BrewProcess(object):
     ####################################################
     def mash_target_reached(self, temp):
         with self._lock:
-            _, minutes = self.recipe.mash_stages[self._brewing_stage[1]]
+            _, minutes = self.recipe.mash_stages[self._brewing_stage["mash"] - 1]
             timer = utils.PausableTimer(minutes * 60, self._mash_stage_done, name=BrewProcess._TIMER_MASH)
             timer.start()
             self._timers.append(timer)
@@ -214,80 +223,43 @@ class BrewProcess(object):
     ########################################################
     ## Mashing
     ########################################################
-    def _mash_stage_done(self, timer):
+    def _mash_stage_done(self, timer, *_, **__):
         with self._lock:
             self._timers.remove(timer)
             self._enter_stage(self._next_stage(self._brewing_stage))
+
+    def _mash(self, step):
+        if step > len(self.recipe.mash_stages):
+            raise ValueError("Mashing step " + str(step) + " is not defined in recipe!")
+        temp, _ = self.recipe.mash_stages[step - 1]
+        self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, temp))
+        self._set_valves_and_pumps(mash_pump=True)
 
     #########################################
     ## SPARGING
     #########################################
 
-    def _sparge_start(self):
-        # Switch off mash tun and pump
-        self.actor.task(BrewTask(BrewTask.STOP_MASHING_TUN))
-        self.actor.task(BrewTask(BrewTask.STOP_MASH_PUMP))
-        # Set valves
-        self.actor.task(BrewTask(BrewTask.SET_BOIL_VALVE_TARGET_MASH))
-        self.actor.task(BrewTask(BrewTask.SET_MASH_VALVE_TARGET_TEMP))
-        # Wait for valves to settle
-        sleep(2)
-        # Start pump from mash to temp
-        self.actor.task(BrewTask(BrewTask.START_MASH_PUMP))
-        time = self.recipe.mash_water * BrewProcess._PUMP_SECONDS_PER_LITER
-        timer = threading.Timer(time, self._sparge_from_boil_to_mash)
-        self._timers.append(timer)
-        timer.start()
+    def _sparging_stage_done(self, timer, *_, **__):
+        with self._lock:
+            self._timers.remove(timer)
+            self._enter_stage(self._next_stage(self._brewing_stage))
 
-    def _sparge_from_boil_to_mash(self):
-        """Situation:
-        * Mashing tun is empty
-        * Temporary kettle contains first wort
-        * Boiling kettle is filled with hot sparging water
-        This sparging water needs to be transferred to mash tun"""
-        self.actor.task(BrewTask(BrewTask.STOP_MASH_PUMP))
-        self.actor.task(BrewTask(BrewTask.START_BOIL_PUMP))
-        time = self.recipe.sparge_water * BrewProcess._PUMP_SECONDS_PER_LITER
-        timer = threading.Timer(time, self._sparge_from_mash_to_temp)
-        self._timers.append(timer)
-        timer.start()
-
-    def _sparge_from_mash_to_temp(self):
-        """Situation:
-        * Mashing tun contains sparging water
-        * Temporary tun contains first wort
-        * Boiling kettle is empty
-        Wort from mashing tun needs to be transferred to temporary"""
-        self.actor.task(BrewTask(BrewTask.STOP_BOIL_PUMP))
-        self.actor.task(BrewTask(BrewTask.START_MASH_PUMP))
-        time = self.recipe.sparge_water * BrewProcess._PUMP_SECONDS_PER_LITER
-        timer = threading.Timer(time, self._sparge_from_temp_to_boil)
-        self._timers.append(timer)
-        timer.start()
-
-    def _sparge_from_temp_to_boil(self):
-        """Situation:
-        * Mashing tun is empty
-        * Temporary kettle contains all wort
-        * Boiling kettle is empty
-        Wort from temporary needs to be transferred to boiling kettle."""
-        self.actor.task(BrewTask(BrewTask.STOP_MASH_PUMP))
-        self.actor.task(BrewTask(BrewTask.START_TEMP_PUMP))
-        time = (self.recipe.mash_water + self.recipe.sparge_water) * BrewProcess._PUMP_SECONDS_PER_LITER
-        timer = threading.Timer(time, self._sparge_finish)
-        self._timers.append(timer)
-        timer.start()
-
-    def _sparge_finish(self):
-        self.actor.task(BrewTask(BrewTask.STOP_TEMP_PUMP))
-        self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, 100))
+    def _sparge(self, waittime, **kwargs):
+        with self._lock:
+            self._set_valves_and_pumps(**kwargs)
+            timer = utils.PausableTimer(waittime, self._sparging_stage_done, BrewProcess._TIMER_SPARGING)
+            self._timers.append(timer)
+            timer.start()
 
     ################################################
     ## Boiling
     ################################################
 
-    def _boil_finished(self):
-        self.actor.task(BrewTask(BrewTask.STOP_BOIL_KETTLE))
+    def _boil_finished(self, timer, *_, **__):
+        with self._lock:
+            self._reset()
+            self._timers.remove(timer)
+            # TODO cooling
 
 if __name__ == "__main__":
     print BrewStages.INITIAL

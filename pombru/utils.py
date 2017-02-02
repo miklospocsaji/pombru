@@ -26,7 +26,7 @@ class PausableTimer(object):
         self._paused_at = None
         self._lock = threading.RLock()
         self.name = name
-    
+
     def _callback_wrapper(self, *args, **kwargs):
         start = False
         with self._lock:
@@ -34,7 +34,7 @@ class PausableTimer(object):
                 self._state = PausableTimer.State.FINISHED
                 start = True
         if start:
-            self._callback(self._timer, self._args, self._kwargs)
+            self._callback(self, *self._args, **self._kwargs)
 
     def start(self):
         if self._state != PausableTimer.State.CREATED:
