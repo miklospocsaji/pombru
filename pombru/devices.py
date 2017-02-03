@@ -117,7 +117,7 @@ class JamMaker(object):
     _STATUS_HEATING = 1
     _STATUS_HOLDING = 2
 
-    def __init__(self, thermistor_channel, heater_panel_gpio_pin, listener=None, **thermistor_spi_args):
+    def __init__(self, thermistor_channel, heater_panel_gpio_pin, listener=None, lock=None, **thermistor_spi_args):
         self._thermistor = Thermistor(thermistor_channel, sample_count=5, sample_delay=0.1, spi_args=thermistor_spi_args)
         self._heater = Heater(heater_panel_gpio_pin)
         self._mode = JamMaker.MODE_MANUAL_OFF
@@ -126,6 +126,7 @@ class JamMaker(object):
         self._status = JamMaker._STATUS_HEATING
         self._heater.start()
         self._timer = None
+        self._lock = lock
         self._set_timer()
 
     def manual_on(self):
@@ -153,7 +154,11 @@ class JamMaker(object):
 
     def get_temperature(self):
         "Returns the jam maker's inside temperature in Celsius."
-        return self._thermistor.get_temp()
+        if self._lock:
+            with self._lock:
+                return self._thermistor.get_temp()
+        else:
+            return self._thermistor.get_temp()
 
     def _timeout(self):
         self._set_timer()
@@ -162,7 +167,7 @@ class JamMaker(object):
         self._calc_heater_power()
 
     def _calc_heater_power(self):
-        curr_temp = self._thermistor.get_temp()
+        curr_temp = self.get_temperature()
         if self._target_temperature >= 100:
             # Boiling
             self._heater.set_power(100)
