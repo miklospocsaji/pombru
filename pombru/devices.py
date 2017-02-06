@@ -129,12 +129,12 @@ class JamMaker(object):
         self._lock = lock
         self._set_timer()
 
-    def manual_on(self):
+    def on(self):
         "Switch on the heater."
         self._mode = JamMaker.MODE_MANUAL_ON
         self._heater.set_power(100)
 
-    def manual_off(self):
+    def off(self):
         "Switch off the heater."
         self._mode = JamMaker.MODE_MANUAL_OFF
         self._heater.set_power(0)
