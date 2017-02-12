@@ -93,6 +93,23 @@ class ProcessApi(Resource):
             target = args["stage"]
             self.process.cont_with(target)
 
+class TWValveApi(Resource):
+    "REST api for two-way valves."
+
+    parser = reqparse.RequestParser()
+    parser.add_argument('target')
+
+    def __init__(self, twvalve):
+        self.twvalve = twvalve
+
+    def get(self):
+        return {"target": self.twvalve.get_direction_name()}
+
+    def put(self):
+        args = TWValveApi.parser.parse_args()
+        new_target = args["target"]
+        self.twvalve.set_direction_name(new_target)
+
 class PombruRestApi(object):
     """Representation of Pombru REST API.
     Following devices should be passed:
@@ -111,10 +128,12 @@ class PombruRestApi(object):
         self._brewery = brewery
         self._api.add_resource(JamMakerApi, BASE + '/mashtun', endpoint='mashtun', resource_class_kwargs={'jammaker': brewery.mashtun})
         self._api.add_resource(JamMakerApi, BASE + '/boiler', endpoint='boiler', resource_class_kwargs={'jammaker': brewery.boiler})
-        self._api.add_resource(RelayApi, BASE + '/mashpump', endpoint='mashpump', resource_class_kwargs={'relay': brewery.mashpump})
+        self._api.add_resource(RelayApi, BASE + '/mashtunpump', endpoint='mashtunpump', resource_class_kwargs={'relay': brewery.mashtunpump})
         self._api.add_resource(RelayApi, BASE + '/temppump', endpoint='temppump', resource_class_kwargs={'relay': brewery.temppump})
         self._api.add_resource(RelayApi, BASE + '/boilerpump', endpoint='boilerpump', resource_class_kwargs={'relay': brewery.boilerpump})
         self._api.add_resource(ProcessApi, BASE + '/process', resource_class_kwargs={'process': brewery.process})
+        self._api.add_resource(TWValveApi, BASE + '/mashtunvalve', endpoint="mashtunvalve", resource_class_kwargs={'twvalve': brewery.mashtunvalve})
+        self._api.add_resource(TWValveApi, BASE + '/boilervalve', endpoint="boilervalve", resource_class_kwargs={'twvalve': brewery.boilervalve})
 
     def start(self):
         self._app.run()

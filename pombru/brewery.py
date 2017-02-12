@@ -9,11 +9,11 @@ class Brewery(object):
     def __init__(self, recipe):
         self.mashtun = devices.JamMaker(0, 27, self.mash_temp_reached)
         self.boiler = devices.JamMaker(1, 22, self.boil_temp_reached)
-        self.mashpump = lowlevel.Relay(2)
+        self.mashtunpump = lowlevel.Relay(2)
         self.temppump = lowlevel.Relay(3)
         self.boilerpump = lowlevel.Relay(4)
-        self.mashvalve = devices.TwoWayValve(14, 15, "mash", "temp", 2)
-        self.boilvalve = devices.TwoWayValve(17, 18, "mash", "boil", 2)
+        self.mashtunvalve = devices.TwoWayValve(14, 15, "mashtun", "temporary", 2)
+        self.boilervalve = devices.TwoWayValve(17, 18, "mashtun", "temporary", 2)
         self.recipe = recipe
         self.process = process.BrewProcess(recipe, self)
 
@@ -36,13 +36,13 @@ class Brewery(object):
         "This method is called by the BrewProcess object."
         logging.info("%s", task)
         if task.event == process.BrewTask.SET_MASH_VALVE_TARGET_MASH:
-            self.mashvalve.mash()
+            self.mashtunvalve.mashtun()
         elif task.event == process.BrewTask.SET_MASH_VALVE_TARGET_TEMP:
-            self.mashvalve.temp()
+            self.mashtunvalve.temporary()
         elif task.event == process.BrewTask.START_MASH_PUMP:
-            self.mashpump.on()
+            self.mashtunpump.on()
         elif task.event == process.BrewTask.STOP_MASH_PUMP:
-            self.mashpump.off()
+            self.mashtunpump.off()
         elif task.event == process.BrewTask.MASH_TARGET_TEMP:
             self.mashtun.set_temperature(task.param)
         elif task.event == process.BrewTask.BOIL_TARGET_TEMP:
@@ -60,9 +60,9 @@ class Brewery(object):
         elif task.event == process.BrewTask.STOP_BOIL_PUMP:
             self.boilerpump.off()
         elif task.event == process.BrewTask.SET_BOIL_VALVE_TARGET_MASH:
-            self.boilvalve.mash()
+            self.boilervalve.mashtun()
         elif task.event == process.BrewTask.SET_BOIL_VALVE_TARGET_TEMP:
-            self.boilvalve.temp()
+            self.boilervalve.temporary()
         elif task.event == process.BrewTask.ENGAGE_COOLING_VALVE:
             #TODO
             pass

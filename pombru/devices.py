@@ -15,26 +15,38 @@ class TwoWayValve(object):
 
     _DEFAULT_SETTLE_TIME = 2
 
-    def __init__(self, direction_1_pin, direction_2_pin, direction_1_name=None, direction_2_name=None, settle_time=None):
+    def __init__(self, direction_1_pin, direction_2_pin, direction_1_name=None, direction_2_name=None, settle_time=_DEFAULT_SETTLE_TIME):
         self._relay_1 = Relay(direction_1_pin)
         self._relay_2 = Relay(direction_2_pin)
         self._direction_1_name = direction_1_name
         self._direction_2_name = direction_2_name
-        if settle_time is None:
-            settle_time = TwoWayValve._DEFAULT_SETTLE_TIME
+        self._direction = None
         self._settle_time = settle_time
+
+    def get_direction_name(self):
+        return self._direction
+
+    def set_direction_name(self, name):
+        if name == self._direction_1_name:
+            self.direction_1()
+        elif name == self._direction_2_name:
+            self.direction_2()
+        else:
+            raise ValueError("Invalid direction name: " + str(name))
 
     def direction_1(self):
         "Moves the valve to direction 1. This method blocks while waiting for the valve to settle."
         self._relay_1.on()
         time.sleep(self._settle_time)
         self._relay_1.off()
+        self._direction = self._direction_1_name
 
     def direction_2(self):
         "Moves the valve to direction 2. This method blocks while waiting for the valve to settle."
         self._relay_2.on()
         time.sleep(self._settle_time)
         self._relay_2.off()
+        self._direction = self._direction_2_name
 
     def __getattr__(self, attr):
         if attr is None:

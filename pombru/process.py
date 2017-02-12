@@ -92,6 +92,9 @@ class BrewProcess(object):
             self._timers.append(timer)
             timer.start()
 
+    def stop(self):
+        self._reset()
+
     def pause(self):
         "Pauses the brewing."
         # TODO
