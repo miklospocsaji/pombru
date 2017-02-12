@@ -110,9 +110,9 @@ class JamMaker(object):
     * heater_panel_gpio_pin: The RPi GPIO PIN number to which the heater panel's relay is wired
     * listener: a function to call when the preset temperature is reached it is passed the set temperature
     * thermistor_spi_args: SPI GPIO PIN settings for the MCP3208"""
-    MODE_MANUAL_ON = 1
-    MODE_MANUAL_OFF = 2
-    MODE_CONTROLLED = 3
+    MODE_MANUAL_ON = 'on'
+    MODE_MANUAL_OFF = 'off'
+    MODE_CONTROLLED = 'controlled'
 
     _STATUS_HEATING = 1
     _STATUS_HOLDING = 2
@@ -159,6 +159,9 @@ class JamMaker(object):
                 return self._thermistor.get_temp()
         else:
             return self._thermistor.get_temp()
+    
+    def get_target_temperature(self):
+        return self._target_temperature
 
     def _timeout(self):
         self._set_timer()

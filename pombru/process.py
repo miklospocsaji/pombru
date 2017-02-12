@@ -78,6 +78,41 @@ class BrewProcess(object):
     _TIMER_BOIL = "_TIMER_BOIL"
     _TIMER_SPARGING = "_TIMER_SPARGING"
 
+    def start(self):
+        "Starts the brewing process."
+        self._enter_stage(BrewStages.MASHING_1)
+        # Set up timer to start heating the sparging water
+        total_mash_time = functools.reduce(lambda sum, (_, y): sum + y, self.recipe.mash_stages, 0)
+        logging.debug("Total mash time: %d minutes", total_mash_time)
+        sparge_heat_delay = total_mash_time - 50
+        if sparge_heat_delay <= 0:
+            self._start_sparge_heat(None)
+        else:
+            timer = utils.PausableTimer(sparge_heat_delay * 60, self._start_sparge_heat, name=BrewProcess._TIMER_START_SPARGE_HEAT)
+            self._timers.append(timer)
+            timer.start()
+
+    def pause(self):
+        "Pauses the brewing."
+        # TODO
+        pass
+
+    def cont(self):
+        pass
+
+    def cont_with(self, stage):
+        pass
+
+    def get_status(self):
+        """Returns a tuple with:
+        - stopped|running|paused
+        - the brewing stage
+        - remaining time to complmeting the brewing stage in seconds
+        - remaining time to complete the brewing
+        """
+        status = 'stopped' if self._brewing_stage is BrewStages.INITIAL else 'running'
+        return status, self._brewing_stage, 0, 0
+
     def _set_valves_and_pumps(self, mash_pump=False, temp_pump=False, boil_pump=False, mash_valve=_MASH_VALVE_TO_MASH, boil_valve=_BOIL_VALVE_TO_MASH):
         events = []
         # Stop all pumps
@@ -175,20 +210,6 @@ class BrewProcess(object):
         else:
             raise ValueError("Unhandled target stage:" + stage["name"])
         self._brewing_stage = stage
-
-    def start(self):
-        "Starts the brewing process."
-        self._enter_stage(BrewStages.MASHING_1)
-        # Set up timer to start heating the sparging water
-        total_mash_time = functools.reduce(lambda sum, (_, y): sum + y, self.recipe.mash_stages, 0)
-        logging.debug("Total mash time: %d minutes", total_mash_time)
-        sparge_heat_delay = total_mash_time - 50
-        if sparge_heat_delay <= 0:
-            self._start_sparge_heat(None)
-        else:
-            timer = utils.PausableTimer(sparge_heat_delay * 60, self._start_sparge_heat, name=BrewProcess._TIMER_START_SPARGE_HEAT)
-            self._timers.append(timer)
-            timer.start()
 
     def _start_sparge_heat(self, timer):
         with self._lock:

@@ -1,6 +1,7 @@
 "Various general purpose utilities."
 import time
 import threading
+import urwid
 
 def enum(*args):
     """Creates an enumeration from the parameter values.
@@ -102,3 +103,14 @@ if __name__ == "__main__":
     rt.start()
     onesec()
 
+class SwitchingPadding(urwid.Padding):
+    "Class copied from https://github.com/urwid/urwid/blob/master/examples/bigtext.py"
+
+    def padding_values(self, size, focus):
+        maxcol = size[0]
+        width, _ = self.original_widget.pack(size, focus=focus)
+        if maxcol > width:
+            self.align = "left"
+        else:
+            self.align = "right"
+        return urwid.Padding.padding_values(self, size, focus)
