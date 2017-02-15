@@ -59,7 +59,7 @@ def twvalve_command(valve, command, target=None):
         res = requests.put(url, headers=CT_FORM, data="target=" + target)
     print res.json() if res is not None else "ERR: unknown command '" + command + "'"
 
-def pump_command(pump, command, onoff=None):
+def pump_command(pump, command):
     url = API_BASE + '/' + pump
     res = None
     if command == 'status':
@@ -89,6 +89,8 @@ def main():
         all_command(c)
     elif o in ['mashtunvalve', 'boilervalve']:
         twvalve_command(o, c, args.target)
+    elif o in ['mashpump', 'boilerpump', 'temppump']:
+        pump_command(o, c)
 
 if __name__ == "__main__":
     main()
