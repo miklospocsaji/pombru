@@ -75,8 +75,8 @@ class ProcessApi(Resource):
         self.process = process
 
     def get(self):
-        status, stage, time1, time2 = self.process.get_status()
-        return {'status': status, 'current_stage': stage['name']}
+        status, stage, stagetime, processtime = self.process.get_status()
+        return {'status': status, 'current_stage': stage['name'], 'stage_remaining': stagetime, 'process_remaining': processtime}
 
     def put(self):
         args = ProcessApi.parser.parse_args()
