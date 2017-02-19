@@ -77,25 +77,27 @@ class BrewProcess(object):
         self._stage_minutes[BrewStages.INITIAL["name"]] = 0
         def mashtime(recipe, mashstage):
             if mashstage > len(recipe.mash_stages):
-                return None
+                return 0
             start = 20
             if mashstage > 1:
                 start = recipe.mash_stages[mashstage - 2][0]
-            return (recipe.mash_stages[mashstage - 1][0] - start + recipe.mash_stages[mashstage - 1][1]) * 60
+            # Assumption: 30 seconds per degrees celsius
+            return ((recipe.mash_stages[mashstage - 1][0] - start) / 2.0 + recipe.mash_stages[mashstage - 1][1]) * 60
         self._stage_minutes[BrewStages.MASHING_1["name"]] = mashtime(self.recipe, 1)
         self._stage_minutes[BrewStages.MASHING_2["name"]] = mashtime(self.recipe, 2)
         self._stage_minutes[BrewStages.MASHING_3["name"]] = mashtime(self.recipe, 3)
         self._stage_minutes[BrewStages.MASHING_4["name"]] = mashtime(self.recipe, 4)
         self._stage_minutes[BrewStages.WAIT_FOR_SPARGING_WATER["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_1["name"]] = self.recipe.mash_water * BrewProcess._PUMP_SECONDS_PER_LITER
-        self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]] = self.recipe.sparge_water / 2 * BrewProcess._PUMP_SECONDS_PER_LITER
+        self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]] = self.recipe.sparge_water / 2.0 * BrewProcess._PUMP_SECONDS_PER_LITER
         self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_1["name"]] = BrewProcess._SPARGE_CIRCULATE_SECS
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_2["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_2["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_2["name"]] = self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_3["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_TEMP_TO_BOIL["name"]] = (self.recipe.mash_water + self.recipe.sparge_water) * BrewProcess._PUMP_SECONDS_PER_LITER
-        self._stage_minutes[BrewStages.BOIL["name"]] = (100 - BrewProcess._SPARGING_TEMP + self.recipe.boiling_time) * 60
+        self._stage_minutes[BrewStages.BOIL["name"]] = ((100 - BrewProcess._SPARGING_TEMP) / 2.0 + self.recipe.boiling_time) * 60
+        logging.info("Stage minutes: " + str(self._stage_minutes))
 
     _MASH_VALVE_TO_MASH = "_MASH_VALVE_TO_MASH"
     _MASH_VALVE_TO_TEMP = "_MASH_VALVE_TO_TEMP"
@@ -147,7 +149,7 @@ class BrewProcess(object):
         stage_elapsed = 0
         if self._brewing_stage_started_at:
             stage_elapsed = datetime.datetime.utcnow() - self._brewing_stage_started_at
-            stage_elapsed = stage_elapsed.seconds()
+            stage_elapsed = stage_elapsed.seconds
         return status, self._brewing_stage, stage_remaining - stage_elapsed, self._get_all_process_remaining_time()
 
     def _get_all_process_remaining_time(self):
