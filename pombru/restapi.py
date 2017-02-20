@@ -140,7 +140,7 @@ class PombruRestApi(object):
         self._app.run()
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
     r = recipes.Recipe(mash_stages=[(50, 1), (64, 1), (68, 1), (74, 1)], boiling_time=1, mash_water=1, sparge_water=1)
     b = brewery.Brewery(r)
     PombruRestApi(b).start()
