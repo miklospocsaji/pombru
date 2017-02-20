@@ -86,9 +86,9 @@ class BrewProcess(object):
                 start = recipe.mash_stages[mashstage - 2][0]
             # Assumption: 30 seconds per degrees celsius
             return ((recipe.mash_stages[mashstage - 1][0] - start) / 2.0 + recipe.mash_stages[mashstage - 1][1]) * 60
-        self._stage_minutes[BrewStages.MASHING_PREPARE] = (self.recipe.mash_stages[0][0] - 20) / 2.0
-        self._stage_minutes[BrewStages.MASHING_BOIL_TO_MASH] = self.recipe.mash_water * BrewProcess._PUMP_SECONDS_PER_LITER
-        self._stage_minutes[BrewStages.MASHING_TEMP_TO_BOIL] = self.recipe.sparge_water * BrewProcess._PUMP_SECONDS_PER_LITER
+        self._stage_minutes[BrewStages.MASHING_PREPARE["name"]] = (self.recipe.mash_stages[0][0] - 20) / 2.0
+        self._stage_minutes[BrewStages.MASHING_BOIL_TO_MASH["name"]] = self.recipe.mash_water * BrewProcess._PUMP_SECONDS_PER_LITER
+        self._stage_minutes[BrewStages.MASHING_TEMP_TO_BOIL["name"]] = self.recipe.sparge_water * BrewProcess._PUMP_SECONDS_PER_LITER
         self._stage_minutes[BrewStages.MASHING_1["name"]] = self.recipe.mash_stages[0][1] * 60
         self._stage_minutes[BrewStages.MASHING_2["name"]] = mashtime(self.recipe, 2)
         self._stage_minutes[BrewStages.MASHING_3["name"]] = mashtime(self.recipe, 3)
@@ -117,17 +117,10 @@ class BrewProcess(object):
 
     def start(self):
         "Starts the brewing process."
-        self._enter_stage(BrewStages.MASHING_1)
+        self._enter_stage(BrewStages.INITIAL["next"])
         # Set up timer to start heating the sparging water
         total_mash_time = functools.reduce(lambda sum, (_, y): sum + y, self.recipe.mash_stages, 0)
         logging.debug("Total mash time: %d minutes", total_mash_time)
-        sparge_heat_delay = total_mash_time - 50
-        if sparge_heat_delay <= 0:
-            self._start_sparge_heat(None)
-        else:
-            timer = utils.PausableTimer(sparge_heat_delay * 60, self._start_sparge_heat, name=BrewProcess._TIMER_START_SPARGE_HEAT)
-            self._timers.append(timer)
-            timer.start()
 
     def stop(self):
         self._reset()
@@ -259,6 +252,8 @@ class BrewProcess(object):
             self._timers.append(timer)
             timer.start()
         elif mashstage > 0:
+            if mashstage == 1:
+                self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, BrewProcess._SPARGING_TEMP))
             self._mash(mashstage)
         elif stage == BrewStages.WAIT_FOR_SPARGING_WATER:
             # It is possible that sparging water is already hot enough
@@ -288,12 +283,6 @@ class BrewProcess(object):
             raise ValueError("Unhandled target stage:" + stage["name"])
         self._brewing_stage_started_at = datetime.datetime.utcnow()
         self._brewing_stage = stage
-
-    def _start_sparge_heat(self, timer):
-        with self._lock:
-            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, BrewProcess._SPARGING_TEMP))
-            if timer is not None:
-                self._timers.remove(timer)
 
     ####################################################
     ## Callbacks from jam makers
