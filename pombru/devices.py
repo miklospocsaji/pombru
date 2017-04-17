@@ -36,16 +36,16 @@ class TwoWayValve(object):
 
     def direction_1(self):
         "Moves the valve to direction 1. This method blocks while waiting for the valve to settle."
-        self._relay_1.on()
-        time.sleep(self._settle_time)
         self._relay_1.off()
+        self._relay_2.off()
+        time.sleep(self._settle_time)
         self._direction = self._direction_1_name
 
     def direction_2(self):
         "Moves the valve to direction 2. This method blocks while waiting for the valve to settle."
+        self._relay_1.on()
         self._relay_2.on()
         time.sleep(self._settle_time)
-        self._relay_2.off()
         self._direction = self._direction_2_name
 
     def __getattr__(self, attr):
