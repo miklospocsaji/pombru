@@ -89,7 +89,7 @@ def main():
         all_command(c)
     elif o in ['mashtunvalve', 'boilervalve']:
         twvalve_command(o, c, args.target)
-    elif o in ['mashpump', 'boilerpump', 'temppump']:
+    elif o in ['mashtunpump', 'boilerpump', 'temppump']:
         pump_command(o, c)
 
 if __name__ == "__main__":
