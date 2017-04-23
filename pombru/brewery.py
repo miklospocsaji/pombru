@@ -7,8 +7,8 @@ import process
 
 class Brewery(object):
     def __init__(self, recipe):
-        self.mashtun = devices.JamMaker(0, 27, self.mash_temp_reached)
-        self.boiler = devices.JamMaker(1, 22, self.boil_temp_reached)
+        self.mashtun = devices.JamMaker(6, 27, self.mash_temp_reached)
+        self.boiler = devices.JamMaker(7, 22, self.boil_temp_reached)
         self.mashtunpump = lowlevel.Relay(2)
         self.temppump = lowlevel.Relay(4)
         self.boilerpump = lowlevel.Relay(3)
