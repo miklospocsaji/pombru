@@ -95,7 +95,10 @@ class Heater(object):
 
         Argument must be between 0 and 100 (inclusive)."""
         with self.__lock:
-            self.__power = power / 10
+            self.__power = round(power / 10.0)
+
+    def get_power(self):
+        return self.__power * 10
 
     def is_panel_on(self):
         "Returns true if the heating panel is currently on."
