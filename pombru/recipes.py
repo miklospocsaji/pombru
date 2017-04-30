@@ -1,4 +1,6 @@
-"""Contans classes for beer recipe handling"""
+"""Contains classes for beer recipe handling"""
+
+import config
 
 class Recipe(object):
     "Contains data needed for Pombru to brew a beer."
@@ -21,3 +23,23 @@ class Recipe(object):
         self.mash_water = mash_water
         self.sparge_water = sparge_water
         self.hop_timing = hop_timing
+
+def from_config():
+    cp = config.config.cp
+    recipe = cp["recipe"]
+
+    mash_stages = []
+    mashcount = int(recipe["MashStageCount"])
+    for mashstage in range(1, mashcount + 1):
+        temp = int(recipe["MashStage" + str(mashstage) + "Temp"])
+        minutes = int(recipe["MashStage" + str(mashstage) + "Min"])
+        mash_stages.append((temp, minutes))
+
+    boiling_time = int(recipe["BoilingTime"])
+    mash_water = int(recipe["MashWaterLiter"])
+    sparge_water = int(recipe["SpargeWaterLiter"])
+    #TODO hop timing
+
+    ret = Recipe(mash_stages, boiling_time, mash_water, sparge_water)
+    return ret
+

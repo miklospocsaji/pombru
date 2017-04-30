@@ -1,6 +1,7 @@
 "REST API for Pombru brewer"
 from flask import Flask
 from flask_restful import Api, Resource, reqparse, abort
+import config
 import logging
 import brewery
 import devices
@@ -141,6 +142,6 @@ class PombruRestApi(object):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
-    r = recipes.Recipe(mash_stages=[(50, 1), (64, 1), (68, 1), (74, 1)], boiling_time=1, mash_water=1, sparge_water=1)
+    r = recipes.from_config()
     b = brewery.Brewery(r)
     PombruRestApi(b).start()
