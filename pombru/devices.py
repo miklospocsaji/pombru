@@ -2,7 +2,9 @@
 
 import threading
 import time
+import config
 from lowlevel import Relay, Thermistor
+from pid.PID import PID
 
 class TwoWayValve(object):
     """Class represents a valve which can flow liquid in two directions.
@@ -142,6 +144,7 @@ class JamMaker(object):
         self._heater.start()
         self._timer = None
         self._lock = lock
+        self._pid = PID(config.config.pid_proportional, config.config.pid_integral, config.config.pid_derivative)
         self._set_timer()
 
     def on(self):
@@ -174,7 +177,7 @@ class JamMaker(object):
                 return self._thermistor.get_temp()
         else:
             return self._thermistor.get_temp()
-    
+
     def get_target_temperature(self):
         return self._target_temperature
 
@@ -193,19 +196,16 @@ class JamMaker(object):
                 self._status = JamMaker._STATUS_HOLDING
                 self._listener(self._target_temperature)
             return
-
-        if self._status == JamMaker._STATUS_HEATING and curr_temp >= self._target_temperature + 0.5:
-            self._status = JamMaker._STATUS_HOLDING
-            self._listener(self._target_temperature)
-
-        if curr_temp >= self._target_temperature + 0.5:
-            self._heater.set_power(0)
-        elif curr_temp >= self._target_temperature:
-            self._heater.set_power(30)
         else:
-            diff = self._target_temperature - curr_temp + 3
-            diff = min(10, diff)
-            self._heater.set_power(diff * 10)
+            if self._status == JamMaker._STATUS_HEATING and curr_temp >= self._target_temperature + 0.5:
+                self._status = JamMaker._STATUS_HOLDING
+                self._listener(self._target_temperature)
+
+            self._pid.update(round(curr_temp))
+            power = self._pid.output
+            power = max(power, 0)
+            power = min(power, 100)
+            self._heater.set_power(power)
 
     def _set_timer(self):
         self._timer = threading.Timer(1, self._timeout)
