@@ -70,6 +70,15 @@ def pump_command(pump, command):
         res = requests.put(url, headers=CT_FORM, data="status=off")
     print res.json() if res is not None else "ERR: unknown command '" + command + "'"
 
+def config_command(command):
+    url = API_BASE + '/config'
+    res = None
+    if command == 'get':
+        res = requests.get(url)
+    elif command == 'reload':
+        res = requests.put(url)
+    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("object", help="The object on which the command is executed")
@@ -91,6 +100,8 @@ def main():
         twvalve_command(o, c, args.target)
     elif o in ['mashtunpump', 'boilerpump', 'temppump']:
         pump_command(o, c)
+    elif o == 'config':
+        config_command(c)
 
 if __name__ == "__main__":
     main()

@@ -62,20 +62,23 @@ class BrewStages(object):
 class BrewProcess(object):
     "Manages a process of the whole brewing."
 
-    def __init__(self, recipe, actor):
+    def __init__(self, recipe):
         self.recipe = recipe
         self._timers = []
-        self.actor = actor
+        self.actor = None
         self._lock = threading.RLock()
         self._brewing_stage = BrewStages.INITIAL
         self._sparging_water_ready = False
         self._stage_minutes = {}
         self._brewing_stage_started_at = None
         self._paused_at = None
+        self.reload_config()
+        self._calculate_stage_minutes()
+
+    def reload_config(self):
         self._pump_seconds_per_liter = config.config.pump_seconds_per_liter
         self._sparging_temperature = config.config.sparging_temperature
         self._sparging_circulate_secs = config.config.sparging_circulate_secs
-        self._calculate_stage_minutes()
 
     def _calculate_stage_minutes(self):
         self._stage_minutes[BrewStages.INITIAL["name"]] = 0

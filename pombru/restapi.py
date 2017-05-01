@@ -5,6 +5,7 @@ import config
 import logging
 import brewery
 import devices
+import process
 import recipes
 
 BASE = '/pombru/api/v1'
@@ -112,6 +113,28 @@ class TWValveApi(Resource):
         new_target = args["target"]
         self.twvalve.set_direction_name(new_target)
 
+class ConfigApi(Resource):
+    "REST api for configuration."
+
+    def __init__(self, brwry, prcss):
+        self.brewery = brwry
+        self.process = prcss
+
+    def get(self):
+        ret = {}
+        for sec in config.config.cp.sections():
+            secdata = {}
+            ret[sec] = secdata
+            for k, v in config.config.cp.items(sec):
+                secdata[k] = v
+
+        return ret
+
+    def put(self):
+        config.config.reload()
+        self.brewery.reload_config()
+        self.process.reload_config()
+
 class PombruRestApi(object):
     """Representation of Pombru REST API.
     Following devices should be passed:
@@ -124,18 +147,19 @@ class PombruRestApi(object):
     - boilerpump
     """
 
-    def __init__(self, brewery):
+    def __init__(self, brwry, prcss):
         self._app = Flask("pombru")
         self._api = Api(self._app)
         self._brewery = brewery
-        self._api.add_resource(JamMakerApi, BASE + '/mashtun', endpoint='mashtun', resource_class_kwargs={'jammaker': brewery.mashtun})
-        self._api.add_resource(JamMakerApi, BASE + '/boiler', endpoint='boiler', resource_class_kwargs={'jammaker': brewery.boiler})
-        self._api.add_resource(RelayApi, BASE + '/mashtunpump', endpoint='mashtunpump', resource_class_kwargs={'relay': brewery.mashtunpump})
-        self._api.add_resource(RelayApi, BASE + '/temppump', endpoint='temppump', resource_class_kwargs={'relay': brewery.temppump})
-        self._api.add_resource(RelayApi, BASE + '/boilerpump', endpoint='boilerpump', resource_class_kwargs={'relay': brewery.boilerpump})
-        self._api.add_resource(ProcessApi, BASE + '/process', resource_class_kwargs={'process': brewery.process})
-        self._api.add_resource(TWValveApi, BASE + '/mashtunvalve', endpoint="mashtunvalve", resource_class_kwargs={'twvalve': brewery.mashtunvalve})
-        self._api.add_resource(TWValveApi, BASE + '/boilervalve', endpoint="boilervalve", resource_class_kwargs={'twvalve': brewery.boilervalve})
+        self._api.add_resource(JamMakerApi, BASE + '/mashtun', endpoint='mashtun', resource_class_kwargs={'jammaker': brwry.mashtun})
+        self._api.add_resource(JamMakerApi, BASE + '/boiler', endpoint='boiler', resource_class_kwargs={'jammaker': brwry.boiler})
+        self._api.add_resource(RelayApi, BASE + '/mashtunpump', endpoint='mashtunpump', resource_class_kwargs={'relay': brwry.mashtunpump})
+        self._api.add_resource(RelayApi, BASE + '/temppump', endpoint='temppump', resource_class_kwargs={'relay': brwry.temppump})
+        self._api.add_resource(RelayApi, BASE + '/boilerpump', endpoint='boilerpump', resource_class_kwargs={'relay': brwry.boilerpump})
+        self._api.add_resource(ProcessApi, BASE + '/process', resource_class_kwargs={'process': prcss})
+        self._api.add_resource(TWValveApi, BASE + '/mashtunvalve', endpoint="mashtunvalve", resource_class_kwargs={'twvalve': brwry.mashtunvalve})
+        self._api.add_resource(TWValveApi, BASE + '/boilervalve', endpoint="boilervalve", resource_class_kwargs={'twvalve': brwry.boilervalve})
+        self._api.add_resource(ConfigApi, BASE + '/config', endpoint="config", resource_class_kwargs={'brwry': brwry, 'prcss': prcss})
 
     def start(self):
         self._app.run()
@@ -143,5 +167,8 @@ class PombruRestApi(object):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
     r = recipes.from_config()
-    b = brewery.Brewery(r)
-    PombruRestApi(b).start()
+    p = process.BrewProcess(r)
+    b = brewery.Brewery()
+    p.actor = b
+    b.process = p
+    PombruRestApi(b, p).start()

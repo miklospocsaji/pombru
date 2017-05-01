@@ -6,16 +6,19 @@ import lowlevel
 import process
 
 class Brewery(object):
-    def __init__(self, recipe):
+    def __init__(self):
         self.mashtun = devices.JamMaker(6, 27, self.mash_temp_reached)
         self.boiler = devices.JamMaker(7, 22, self.boil_temp_reached)
         self.mashtunpump = lowlevel.Relay(2)
         self.temppump = lowlevel.Relay(4)
         self.boilerpump = lowlevel.Relay(3)
-        self.mashtunvalve = devices.TwoWayValve(17, 18, "mashtun", "temporary", 2)
-        self.boilervalve = devices.TwoWayValve(14, 15, "mashtun", "temporary", 2)
-        self.recipe = recipe
-        self.process = process.BrewProcess(recipe, self)
+        self.mashtunvalve = devices.TwoWayValve(17, 18, "mashtun", "temporary")
+        self.boilervalve = devices.TwoWayValve(14, 15, "mashtun", "temporary")
+        self.process = None
+
+    def reload_config(self):
+        self.mashtun.reload_config()
+        self.boiler.reload_config()
 
     ##############################
     # Jam maker callbacks

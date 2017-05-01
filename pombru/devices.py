@@ -17,13 +17,12 @@ class TwoWayValve(object):
 
     _DEFAULT_SETTLE_TIME = 2
 
-    def __init__(self, direction_1_pin, direction_2_pin, direction_1_name=None, direction_2_name=None, settle_time=_DEFAULT_SETTLE_TIME):
+    def __init__(self, direction_1_pin, direction_2_pin, direction_1_name=None, direction_2_name=None):
         self._relay_1 = Relay(direction_1_pin)
         self._relay_2 = Relay(direction_2_pin)
         self._direction_1_name = direction_1_name
         self._direction_2_name = direction_2_name
         self._direction = None
-        self._settle_time = settle_time
 
     def get_direction_name(self):
         return self._direction
@@ -40,14 +39,14 @@ class TwoWayValve(object):
         "Moves the valve to direction 1. This method blocks while waiting for the valve to settle."
         self._relay_1.off()
         self._relay_2.off()
-        time.sleep(self._settle_time)
+        time.sleep(config.config.valve_settle_time_secs)
         self._direction = self._direction_1_name
 
     def direction_2(self):
         "Moves the valve to direction 2. This method blocks while waiting for the valve to settle."
         self._relay_1.on()
         self._relay_2.on()
-        time.sleep(self._settle_time)
+        time.sleep(config.config.valve_settle_time_secs)
         self._direction = self._direction_2_name
 
     def __getattr__(self, attr):
@@ -144,8 +143,11 @@ class JamMaker(object):
         self._heater.start()
         self._timer = None
         self._lock = lock
-        self._pid = PID(config.config.pid_proportional, config.config.pid_integral, config.config.pid_derivative)
+        self.reload_config()
         self._set_timer()
+
+    def reload_config(self):
+        self._pid = PID(config.config.pid_proportional, config.config.pid_integral, config.config.pid_derivative)
 
     def on(self):
         "Switch on the heater."

@@ -18,6 +18,9 @@ class PombruConfig:
     PROPERTY_SPARGING_TEMPERATURE = "SpargingTemperature"
     PROPERTY_SPARGING_CIRCULATE_SECS = "SpargingCirculateSecs"
 
+    SECTION_VALVES = "valves"
+    PROPERTY_VALVE_SETTLE_TIME_SECS = "SettleTimeSecs"
+
     def __init__(self):
         self.reload()
 
@@ -38,6 +41,9 @@ class PombruConfig:
         self.pid_proportional = float(self.cp[PombruConfig.SECTION_PID][PombruConfig.PROPERTY_PROPORTIONAL])
         self.pid_integral = float(self.cp[PombruConfig.SECTION_PID][PombruConfig.PROPERTY_INTEGRAL])
         self.pid_derivative = float(self.cp[PombruConfig.SECTION_PID][PombruConfig.PROPERTY_DERIVATIVE])
+
+        # Section "valves"
+        self.valve_settle_time_secs = int(self.cp[PombruConfig.SECTION_VALVES][PombruConfig.PROPERTY_VALVE_SETTLE_TIME_SECS])
 
 config = PombruConfig()
 
