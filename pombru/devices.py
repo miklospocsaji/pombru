@@ -212,3 +212,64 @@ class JamMaker(object):
     def _set_timer(self):
         self._timer = threading.Timer(1, self._timeout)
         self._timer.start()
+
+class Pump(object):
+    """
+    Class represents a pump.
+
+    A pump is simply a relay, but when the pump is turned on
+    the time ditribution of work-idle cycles can be configured.
+    """
+
+    STARTED = 'started'
+    STOPPED = 'stopped'
+
+    def __init__(self, pin, default_work_sec=1, default_idle_sec=0):
+        if default_work_sec <= 0:
+            raise ValueError('default_work_sec cannot be nonpositive!')
+        self.default_work_sec = default_work_sec
+        self.default_idle_sec = default_idle_sec
+        self._state = Pump.STOPPED
+        self._relay = Relay(pin)
+        self._relay.off()
+        self._timer = None
+        self._lock = threading.RLock()
+
+    def start(self, work_sec=None, idle_sec=None):
+        with self._lock:
+            if self._state == Pump.STARTED:
+                return
+            if work_sec == None:
+                work_sec = self.default_work_sec
+                idle_sec = self.default_idle_sec
+            self._work_sec = work_sec
+            self._idle_sec = idle_sec
+            if work_sec <= 0:
+                raise ValueError('work_sec cannot be nonpositive!')
+            self._relay.on()
+            self._state = Pump.STARTED
+            if idle_sec > 0:
+                self._timer = threading.Timer(work_sec, self._idle)
+
+    def stop(self):
+        with self._lock:
+            if self._state == Pump.STOPPED:
+                return
+            self._relay.off()
+            if self._timer is not None:
+                self._timer.cancel()
+            self._state = Pump.STOPPED
+
+    def _idle(self):
+        with self._lock:
+            if self._state == Pump.STOPPED:
+                return
+            self._relay.off()
+            self._timer = threading.Timer(self._idle_sec, self._work)
+
+    def _work(self):
+        with self._lock:
+            if self._state == Pump.STOPPED:
+                return
+            self._relay.on()
+            self._timer = threading.Timer(self._work_sec, self._idle)
