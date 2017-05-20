@@ -165,7 +165,7 @@ class PombruRestApi(object):
         self._app.run()
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(message)s')
+    logging.basicConfig(filename='pombru.log', level=logging.DEBUG, format='%(asctime)s %(message)s')
     r = recipes.from_config()
     p = process.BrewProcess(r)
     b = brewery.Brewery()
