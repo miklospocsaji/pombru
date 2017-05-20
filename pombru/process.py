@@ -172,7 +172,7 @@ class BrewProcess(object):
         else:
             return self._stage_minutes[stage["name"]] + self._get_time_remaining(stage[BrewStages.KEY_NEXT_STAGE])
 
-    def _set_valves_and_pumps(self, mash_pump=False, temp_pump=False, boil_pump=False, mash_valve=_MASH_VALVE_TO_MASH, boil_valve=_BOIL_VALVE_TO_MASH):
+    def _set_valves_and_pumps(self, mash_pump=False, temp_pump=False, boil_pump=False, mash_valve=_MASH_VALVE_TO_MASH, boil_valve=_BOIL_VALVE_TO_MASH, param=None):
         events = []
         # Stop all pumps
         events.append(BrewTask(BrewTask.STOP_MASH_PUMP))
@@ -195,7 +195,7 @@ class BrewProcess(object):
 
         # Set pumps
         if mash_pump:
-            events.append(BrewTask(BrewTask.START_MASH_PUMP))
+            events.append(BrewTask(BrewTask.START_MASH_PUMP, param))
         else:
             events.append(BrewTask(BrewTask.STOP_MASH_PUMP))
 
@@ -240,6 +240,8 @@ class BrewProcess(object):
     def _enter_stage(self, stage):
         sparge_pump_time = self.recipe.sparge_water * self._pump_seconds_per_liter
         mash_pump_time = self.recipe.mash_water * self._pump_seconds_per_liter
+        # Time multiplier when the mash tun pump operates in sparging mode
+        sparge_pump_multiplier = float(config.config.sparge_circulate_distribution_work) / float(config.config.sparge_circulate_distribution_work + config.config.sparge_circulate_distribution_idle)
         mashstage = stage["mash"]
         self._brewing_stage_started_at = datetime.datetime.utcnow()
         if stage == BrewStages.INITIAL:
@@ -268,21 +270,21 @@ class BrewProcess(object):
                 self._enter_stage(stage["next"])
                 return # to avoid setting the brewing stage at the end...
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_1:
-            self._sparge(mash_pump_time, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+            self._sparge(mash_pump_time * sparge_pump_multiplier, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_BOIL_TO_MASH_1:
             self._sparge(sparge_pump_time / 2.0, boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
         elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_1:
-            self._sparge(60, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH)
+            self._sparge(config.config.sparging_circulate_secs, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_2:
-            self._sparge(sparge_pump_time / 2.0, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+            self._sparge(sparge_pump_time / 2.0 * sparge_pump_multiplier, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_BOIL_TO_MASH_2:
             self._sparge(sparge_pump_time / 2.0, boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
         elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_2:
             self.actor.task(BrewTask(BrewTask.STOP_BOIL_KETTLE))
-            self._sparge(60, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH)
+            self._sparge(config.config.sparging_circulate_secs, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_3:
             self.actor.task(BrewTask(BrewTask.STOP_MASHING_TUN))
-            self._sparge(sparge_pump_time / 2.0, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+            self._sparge(sparge_pump_time / 2.0 * sparge_pump_multiplier, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_TEMP_TO_BOIL:
             self._sparge(sparge_pump_time + mash_pump_time, temp_pump=True)
         elif stage == BrewStages.BOIL:
@@ -343,7 +345,7 @@ class BrewProcess(object):
             raise ValueError("Mashing step " + str(step) + " is not defined in recipe!")
         temp, _ = self.recipe.mash_stages[step - 1]
         self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, temp))
-        self._set_valves_and_pumps(mash_pump=True)
+        self._set_valves_and_pumps(mash_pump=True, param='MASH_DISTRIBUTION')
 
     #########################################
     ## SPARGING

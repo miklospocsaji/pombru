@@ -6,8 +6,10 @@ class PombruConfig:
 
     SECTION_PUMPS = "pumps"
     PROPERTY_SECONDS_PER_LITER = "SecondsPerLiter"
-    PROPERTY_MASH_PUMP_CIRCULATE_DISTRIBUTION_WORK = "CirculateDistributionWork"
-    PROPERTY_MASH_PUMP_CIRCULATE_DISTRIBUTION_IDLE = "CirculateDistributionIdle"
+    PROPERTY_MASH_CIRCULATE_DISTRIBUTION_WORK = "MashCirculateDistributionWork"
+    PROPERTY_MASH_CIRCULATE_DISTRIBUTION_IDLE = "MashCirculateDistributionIdle"
+    PROPERTY_SPARGE_CIRCULATE_DISTRIBUTION_WORK = "SpargeCirculateDistributionWork"
+    PROPERTY_SPARGE_CIRCULATE_DISTRIBUTION_IDLE = "SpargeCirculateDistributionIdle"
 
     SECTION_PID = "pid"
     PROPERTY_PROPORTIONAL = "Proportional"
@@ -30,8 +32,10 @@ class PombruConfig:
 
         # Section "pumps"
         self.pump_seconds_per_liter = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SECONDS_PER_LITER])
-        self.mash_pump_circulate_distribution_work = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_MASH_PUMP_CIRCULATE_DISTRIBUTION_WORK])
-        self.mash_pump_circulate_distribution_idle = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_MASH_PUMP_CIRCULATE_DISTRIBUTION_IDLE])
+        self.mash_circulate_distribution_work = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_MASH_CIRCULATE_DISTRIBUTION_WORK])
+        self.mash_circulate_distribution_idle = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_MASH_CIRCULATE_DISTRIBUTION_IDLE])
+        self.sparge_circulate_distribution_work = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SPARGE_CIRCULATE_DISTRIBUTION_WORK])
+        self.sparge_circulate_distribution_idle = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SPARGE_CIRCULATE_DISTRIBUTION_IDLE])
 
         # Section "process"
         self.sparging_temperature = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_TEMPERATURE])

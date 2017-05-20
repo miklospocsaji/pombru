@@ -226,7 +226,7 @@ class Pump(object):
 
     def __init__(self, pin, default_work_sec=1, default_idle_sec=0):
         if default_work_sec <= 0:
-            raise ValueError('default_work_sec cannot be nonpositive!')
+            raise ValueError('default_work_sec must be positive!')
         self.default_work_sec = default_work_sec
         self.default_idle_sec = default_idle_sec
         self._state = Pump.STOPPED
@@ -245,7 +245,7 @@ class Pump(object):
             self._work_sec = work_sec
             self._idle_sec = idle_sec
             if work_sec <= 0:
-                raise ValueError('work_sec cannot be nonpositive!')
+                raise ValueError('work_sec must be positive!')
             self._relay.on()
             self._state = Pump.STARTED
             if idle_sec > 0:
