@@ -173,6 +173,7 @@ class BrewProcess(object):
             return self._stage_minutes[stage["name"]] + self._get_time_remaining(stage[BrewStages.KEY_NEXT_STAGE])
 
     def _set_valves_and_pumps(self, mash_pump=False, temp_pump=False, boil_pump=False, mash_valve=_MASH_VALVE_TO_MASH, boil_valve=_BOIL_VALVE_TO_MASH, param=None):
+        logging.debug("set_valves_and_pumps: " + str(locals()))
         events = []
         # Stop all pumps
         events.append(BrewTask(BrewTask.STOP_MASH_PUMP))
@@ -238,6 +239,7 @@ class BrewProcess(object):
     ## State machine
     #################################################
     def _enter_stage(self, stage):
+        logging.info("enter stage: " + stage["name"])
         sparge_pump_time = self.recipe.sparge_water * self._pump_seconds_per_liter
         mash_pump_time = self.recipe.mash_water * self._pump_seconds_per_liter
         # Time multiplier when the mash tun pump operates in sparging mode
@@ -300,6 +302,7 @@ class BrewProcess(object):
     ####################################################
     def mash_target_reached(self, temp):
         with self._lock:
+            logging.info("mashtun target reached: " + str(temp))
             if self._brewing_stage == BrewStages.INITIAL:
                 return
             _, minutes = self.recipe.mash_stages[self._brewing_stage["mash"] - 1]
@@ -312,6 +315,7 @@ class BrewProcess(object):
 
     def boil_target_reached(self, temp):
         with self._lock:
+            logging.info("boiler target reached: " + str(temp) + " stage: " + self._brewing_stage["name"])
             if self._brewing_stage == BrewStages.INITIAL:
                 return
             if temp == self._sparging_temperature:
