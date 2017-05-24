@@ -43,26 +43,26 @@ class JamMakerApi(Resource):
             abort(400)
         return self.get()
 
-class RelayApi(Resource):
-    "Represents a REST api for a relay."
+class PumpApi(Resource):
+    "Represents a REST api for a pump."
 
     parser = reqparse.RequestParser()
     parser.add_argument('status')
 
-    def __init__(self, relay):
-        self.relay = relay
+    def __init__(self, pump):
+        self.pump = pump
 
     def get(self):
-        onoff = 'on' if self.relay.get_value() else 'off'
+        onoff = 'on' if self.pump.is_started() else 'off'
         return {'status': onoff}
 
     def put(self):
-        args = RelayApi.parser.parse_args()
+        args = PumpApi.parser.parse_args()
         new_status = args['status']
         if new_status == 'on':
-            self.relay.on()
+            self.pump.start()
         elif new_status == 'off':
-            self.relay.off()
+            self.pump.stop()
         else:
             abort(400)
         return self.get(), 202
@@ -150,12 +150,12 @@ class PombruRestApi(object):
     def __init__(self, brwry, prcss):
         self._app = Flask("pombru")
         self._api = Api(self._app)
-        self._brewery = brewery
+        self._brewery = brwry
         self._api.add_resource(JamMakerApi, BASE + '/mashtun', endpoint='mashtun', resource_class_kwargs={'jammaker': brwry.mashtun})
         self._api.add_resource(JamMakerApi, BASE + '/boiler', endpoint='boiler', resource_class_kwargs={'jammaker': brwry.boiler})
-        self._api.add_resource(RelayApi, BASE + '/mashtunpump', endpoint='mashtunpump', resource_class_kwargs={'relay': brwry.mashtunpump})
-        self._api.add_resource(RelayApi, BASE + '/temppump', endpoint='temppump', resource_class_kwargs={'relay': brwry.temppump})
-        self._api.add_resource(RelayApi, BASE + '/boilerpump', endpoint='boilerpump', resource_class_kwargs={'relay': brwry.boilerpump})
+        self._api.add_resource(PumpApi, BASE + '/mashtunpump', endpoint='mashtunpump', resource_class_kwargs={'pump': brwry.mashtunpump})
+        self._api.add_resource(PumpApi, BASE + '/temppump', endpoint='temppump', resource_class_kwargs={'pump': brwry.temppump})
+        self._api.add_resource(PumpApi, BASE + '/boilerpump', endpoint='boilerpump', resource_class_kwargs={'pump': brwry.boilerpump})
         self._api.add_resource(ProcessApi, BASE + '/process', resource_class_kwargs={'process': prcss})
         self._api.add_resource(TWValveApi, BASE + '/mashtunvalve', endpoint="mashtunvalve", resource_class_kwargs={'twvalve': brwry.mashtunvalve})
         self._api.add_resource(TWValveApi, BASE + '/boilervalve', endpoint="boilervalve", resource_class_kwargs={'twvalve': brwry.boilervalve})

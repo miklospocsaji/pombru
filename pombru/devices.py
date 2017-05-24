@@ -260,6 +260,9 @@ class Pump(object):
                 self._timer.cancel()
             self._state = Pump.STOPPED
 
+    def is_started(self):
+        return self._state == Pump.STARTED
+
     def _idle(self):
         with self._lock:
             if self._state == Pump.STOPPED:
