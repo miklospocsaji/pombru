@@ -19,6 +19,7 @@ class PombruConfig:
     SECTION_PROCESS = "process"
     PROPERTY_SPARGING_TEMPERATURE = "SpargingTemperature"
     PROPERTY_SPARGING_CIRCULATE_SECS = "SpargingCirculateSecs"
+    PROPERTY_PAUSE = "Pause"
 
     SECTION_VALVES = "valves"
     PROPERTY_VALVE_SETTLE_TIME_SECS = "SettleTimeSecs"
@@ -40,6 +41,7 @@ class PombruConfig:
         # Section "process"
         self.sparging_temperature = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_TEMPERATURE])
         self.sparging_circulate_secs = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_CIRCULATE_SECS])
+        self.pause = bool(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PAUSE])
 
         # Section "pid"
         self.pid_proportional = float(self.cp[PombruConfig.SECTION_PID][PombruConfig.PROPERTY_PROPORTIONAL])

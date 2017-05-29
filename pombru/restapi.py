@@ -72,7 +72,7 @@ class ProcessApi(Resource):
 
     parser = reqparse.RequestParser()
     parser.add_argument('command')
-    parser.add_argument('continue_with_stage', required=False)
+    parser.add_argument('stage', required=False)
 
     def __init__(self, process):
         self.process = process
@@ -93,8 +93,10 @@ class ProcessApi(Resource):
         elif command == "continue":
             self.process.cont()
         elif command == "continue_with":
-            target = args["stage"]
+            target = process.BrewStages.__dict__[args["stage"]]
             self.process.cont_with(target)
+        elif command == "next":
+            self.process.next()
 
 class TWValveApi(Resource):
     "REST api for two-way valves."

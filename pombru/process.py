@@ -43,10 +43,12 @@ class BrewStages(object):
     BOIL = {KEY_NAME: "Boiling wort", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: None}
     SPARGE_TEMP_TO_BOIL = {KEY_NAME: "Transferring wort to boiling kettle", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: BOIL}
     SPARGE_MASH_TO_TEMP_3 = {KEY_NAME: "Sparging - transferring wort to temporary III.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_TEMP_TO_BOIL}
-    SPARGE_CIRCULATE_IN_MASH_2 = {KEY_NAME: "Sparging - circulating in mash tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_3}
+    SPARGE_PAUSE_2 = {KEY_NAME: "Second pause while sparging", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_3}
+    SPARGE_CIRCULATE_IN_MASH_2 = {KEY_NAME: "Sparging - circulating in mash tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_PAUSE_2}
     SPARGE_BOIL_TO_MASH_2 = {KEY_NAME: "Sparging - transferring water to mashing tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_CIRCULATE_IN_MASH_2}
     SPARGE_MASH_TO_TEMP_2 = {KEY_NAME: "Sparging - transferring wort to temporary II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_BOIL_TO_MASH_2}
-    SPARGE_CIRCULATE_IN_MASH_1 = {KEY_NAME: "Sparging - circulating in mash tun I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_2}
+    SPARGE_PAUSE_1 = {KEY_NAME: "First pause while sparging", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_2}
+    SPARGE_CIRCULATE_IN_MASH_1 = {KEY_NAME: "Sparging - circulating in mash tun I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_PAUSE_1}
     SPARGE_BOIL_TO_MASH_1 = {KEY_NAME: "Sparging - transferring water to mashing tun I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_CIRCULATE_IN_MASH_1}
     SPARGE_MASH_TO_TEMP_1 = {KEY_NAME: "Sparging - transferring wort to temporary I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_BOIL_TO_MASH_1}
     WAIT_FOR_SPARGING_WATER = {KEY_NAME: "Waiting for the sparging water to heat up", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_1}
@@ -101,9 +103,11 @@ class BrewProcess(object):
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_1["name"]] = self.recipe.mash_water * self._pump_seconds_per_liter
         self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]] = self.recipe.sparge_water / 2.0 * self._pump_seconds_per_liter
         self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_1["name"]] = self._sparging_circulate_secs
+        self._stage_minutes[BrewStages.SPARGE_PAUSE_1["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_2["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_2["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_2["name"]] = self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_1["name"]]
+        self._stage_minutes[BrewStages.SPARGE_PAUSE_2["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_3["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_TEMP_TO_BOIL["name"]] = (self.recipe.mash_water + self.recipe.sparge_water) * self._pump_seconds_per_liter
         self._stage_minutes[BrewStages.BOIL["name"]] = ((100 - self._sparging_temperature) / 2.0 + self.recipe.boiling_time) * 60
@@ -138,7 +142,15 @@ class BrewProcess(object):
         pass
 
     def cont_with(self, stage):
-        pass
+        with self._lock:
+            for timer in self._timers:
+                timer.cancel()
+            self._timers = []
+            self._stop_all()
+        self._enter_stage(stage)
+
+    def next(self):
+        self._enter_stage(self._brewing_stage["next"])
 
     def get_status(self):
         """Returns a tuple with:
@@ -185,14 +197,11 @@ class BrewProcess(object):
             events.append(BrewTask(BrewTask.SET_MASH_VALVE_TARGET_MASH))
         elif mash_valve == BrewProcess._MASH_VALVE_TO_TEMP:
             events.append(BrewTask(BrewTask.SET_MASH_VALVE_TARGET_TEMP))
-        else:
-            raise ValueError("Invalid value for mash_valve: " + str(mash_valve))
+
         if boil_valve == BrewProcess._BOIL_VALVE_TO_MASH:
             events.append(BrewTask(BrewTask.SET_BOIL_VALVE_TARGET_MASH))
         elif boil_valve == BrewProcess._BOIL_VALVE_TO_TEMP:
             events.append(BrewTask(BrewTask.SET_BOIL_VALVE_TARGET_TEMP))
-        else:
-            raise ValueError("Invalid value for boil_valve: " + str(boil_valve))
 
         # Set pumps
         if mash_pump:
@@ -240,6 +249,9 @@ class BrewProcess(object):
     #################################################
     def _enter_stage(self, stage):
         logging.info("enter stage: " + stage["name"])
+        if not config.config.pause and (stage == BrewStages.SPARGE_PAUSE_1 or stage == BrewStages.SPARGE_PAUSE_2):
+            logging.info("Pausing not enabled by config, skipping automatically to next stage")
+            self._enter_stage(stage[BrewStages.KEY_NEXT_STAGE])
         sparge_pump_time = self.recipe.sparge_water * self._pump_seconds_per_liter
         mash_pump_time = self.recipe.mash_water * self._pump_seconds_per_liter
         # Time multiplier when the mash tun pump operates in sparging mode
@@ -250,7 +262,6 @@ class BrewProcess(object):
             raise ValueError("Initial is not a valid stage to resume to.")
         elif stage == BrewStages.MASHING_PREPARE:
             first_mash_temp = self.recipe.mash_stages[0][0]
-            self._set_valves_and_pumps()
             self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, first_mash_temp))
         elif stage == BrewStages.MASHING_BOIL_TO_MASH:
             self._set_valves_and_pumps(boil_valve=BrewProcess._BOIL_VALVE_TO_MASH, boil_pump=True)
@@ -277,6 +288,8 @@ class BrewProcess(object):
             self._sparge(sparge_pump_time / 2.0, boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
         elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_1:
             self._sparge(config.config.sparging_circulate_secs, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH, param='SPARGE_DISTRIBUTION')
+        elif stage == BrewStages.SPARGE_PAUSE_1 or stage == BrewStages.SPARGE_PAUSE_2:
+            self._set_valves_and_pumps(mash_valve=None, boil_valve=None)
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_2:
             self._sparge(sparge_pump_time / 2.0 * sparge_pump_multiplier, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_BOIL_TO_MASH_2:

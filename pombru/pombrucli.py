@@ -28,7 +28,7 @@ def process_command(command, stage=None):
         return requests.put(url, headers=CT_FORM, data=data)
     if command == 'status':
         res = requests.get(url)
-    elif command in ['start', 'stop', 'pause', 'continue']:
+    elif command in ['start', 'stop', 'pause', 'continue', 'next']:
         res = processput('command=' + command)
     elif command == 'continue_with':
         res = processput('command=continue_with', 'stage=' + stage)
