@@ -52,7 +52,8 @@ class BrewStages(object):
     SPARGE_BOIL_TO_MASH_1 = {KEY_NAME: "Sparging - transferring water to mashing tun I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_CIRCULATE_IN_MASH_1}
     SPARGE_MASH_TO_TEMP_1 = {KEY_NAME: "Sparging - transferring wort to temporary I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_BOIL_TO_MASH_1}
     WAIT_FOR_SPARGING_WATER = {KEY_NAME: "Waiting for the sparging water to heat up", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_1}
-    MASHING_4 = {KEY_NAME: "Mashing - step IV.", KEY_MASH_STAGE_NUM: 4, KEY_NEXT_STAGE: WAIT_FOR_SPARGING_WATER}
+    MASHING_PAUSE = {KEY_NAME: "Paused after mashing. Please take a iodine test and continue", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: WAIT_FOR_SPARGING_WATER}
+    MASHING_4 = {KEY_NAME: "Mashing - step IV.", KEY_MASH_STAGE_NUM: 4, KEY_NEXT_STAGE: MASHING_PAUSE}
     MASHING_3 = {KEY_NAME: "Mashing - step III.", KEY_MASH_STAGE_NUM: 3, KEY_NEXT_STAGE: MASHING_4}
     MASHING_2 = {KEY_NAME: "Mashing - step II.", KEY_MASH_STAGE_NUM: 2, KEY_NEXT_STAGE: MASHING_3}
     MASHING_1 = {KEY_NAME: "Mashing - step I.", KEY_MASH_STAGE_NUM: 1, KEY_NEXT_STAGE: MASHING_2}
@@ -99,6 +100,7 @@ class BrewProcess(object):
         self._stage_minutes[BrewStages.MASHING_2["name"]] = mashtime(self.recipe, 2)
         self._stage_minutes[BrewStages.MASHING_3["name"]] = mashtime(self.recipe, 3)
         self._stage_minutes[BrewStages.MASHING_4["name"]] = mashtime(self.recipe, 4)
+        self._stage_minutes[BrewStages.MASHING_PAUSE["name"]] = 0
         self._stage_minutes[BrewStages.WAIT_FOR_SPARGING_WATER["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_1["name"]] = self.recipe.mash_water * self._pump_seconds_per_liter
         self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]] = self.recipe.sparge_water / 2.0 * self._pump_seconds_per_liter
@@ -249,7 +251,8 @@ class BrewProcess(object):
     #################################################
     def _enter_stage(self, stage):
         logging.info("enter stage: " + stage["name"])
-        if not config.config.pause and (stage == BrewStages.SPARGE_PAUSE_1 or stage == BrewStages.SPARGE_PAUSE_2):
+        pause_stage = stage in [BrewStages.SPARGE_PAUSE_1, BrewStages.SPARGE_PAUSE_2, BrewStages.MASHING_PAUSE]
+        if not config.config.pause and pause_stage:
             logging.info("Pausing not enabled by config, skipping automatically to next stage")
             self._enter_stage(stage[BrewStages.KEY_NEXT_STAGE])
         sparge_pump_time = self.recipe.sparge_water * self._pump_seconds_per_liter
@@ -305,6 +308,8 @@ class BrewProcess(object):
         elif stage == BrewStages.BOIL:
             self._stop_all()
             self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, 100))
+        elif pause_stage:
+            pass
         else:
             raise ValueError("Unhandled target stage:" + stage["name"])
         self._brewing_stage_started_at = datetime.datetime.utcnow()
