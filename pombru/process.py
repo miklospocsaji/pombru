@@ -94,16 +94,16 @@ class BrewProcess(object):
             # Assumption: 30 seconds per degrees celsius
             return ((recipe.mash_stages[mashstage - 1][0] - start) / 2.0 + recipe.mash_stages[mashstage - 1][1]) * 60
         self._stage_minutes[BrewStages.MASHING_PREPARE["name"]] = (self.recipe.mash_stages[0][0] - 20) / 2.0
-        self._stage_minutes[BrewStages.MASHING_BOIL_TO_MASH["name"]] = self.recipe.mash_water * self._pump_seconds_per_liter
-        self._stage_minutes[BrewStages.MASHING_TEMP_TO_BOIL["name"]] = self.recipe.sparge_water * self._pump_seconds_per_liter
+        self._stage_minutes[BrewStages.MASHING_BOIL_TO_MASH["name"]] = (self.recipe.mash_water - 1) * self._pump_seconds_per_liter + 60
+        self._stage_minutes[BrewStages.MASHING_TEMP_TO_BOIL["name"]] = (self.recipe.sparge_water - 1) * self._pump_seconds_per_liter + 60
         self._stage_minutes[BrewStages.MASHING_1["name"]] = self.recipe.mash_stages[0][1] * 60
         self._stage_minutes[BrewStages.MASHING_2["name"]] = mashtime(self.recipe, 2)
         self._stage_minutes[BrewStages.MASHING_3["name"]] = mashtime(self.recipe, 3)
         self._stage_minutes[BrewStages.MASHING_4["name"]] = mashtime(self.recipe, 4)
         self._stage_minutes[BrewStages.MASHING_PAUSE["name"]] = 0
         self._stage_minutes[BrewStages.WAIT_FOR_SPARGING_WATER["name"]] = 0
-        self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_1["name"]] = self.recipe.mash_water * self._pump_seconds_per_liter
-        self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]] = self.recipe.sparge_water / 2.0 * self._pump_seconds_per_liter
+        self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_1["name"]] = (self.recipe.mash_water - 1) * self._pump_seconds_per_liter + 60
+        self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]] = (self.recipe.sparge_water / 2.0 - 1) * self._pump_seconds_per_liter + 60
         self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_1["name"]] = self._sparging_circulate_secs
         self._stage_minutes[BrewStages.SPARGE_PAUSE_1["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_2["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
@@ -111,7 +111,7 @@ class BrewProcess(object):
         self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_2["name"]] = self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_PAUSE_2["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_3["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
-        self._stage_minutes[BrewStages.SPARGE_TEMP_TO_BOIL["name"]] = (self.recipe.mash_water + self.recipe.sparge_water) * self._pump_seconds_per_liter
+        self._stage_minutes[BrewStages.SPARGE_TEMP_TO_BOIL["name"]] = (self.recipe.mash_water + self.recipe.sparge_water - 1) * self._pump_seconds_per_liter + 60
         self._stage_minutes[BrewStages.BOIL["name"]] = ((100 - self._sparging_temperature) / 2.0 + self.recipe.boiling_time) * 60
         logging.info("Stage minutes: " + str(self._stage_minutes))
 
@@ -152,7 +152,7 @@ class BrewProcess(object):
         self._enter_stage(stage)
 
     def next(self):
-        self._enter_stage(self._brewing_stage["next"])
+        self._enter_stage(self._next_stage(self._brewing_stage))
 
     def get_status(self):
         """Returns a tuple with:
@@ -255,8 +255,8 @@ class BrewProcess(object):
         if not config.config.pause and pause_stage:
             logging.info("Pausing not enabled by config, skipping automatically to next stage")
             self._enter_stage(stage[BrewStages.KEY_NEXT_STAGE])
-        sparge_pump_time = self.recipe.sparge_water * self._pump_seconds_per_liter
-        mash_pump_time = self.recipe.mash_water * self._pump_seconds_per_liter
+        sparge_pump_time = (self.recipe.sparge_water - 1) * self._pump_seconds_per_liter + 60
+        mash_pump_time = (self.recipe.mash_water - 1) * self._pump_seconds_per_liter + 60
         # Time multiplier when the mash tun pump operates in sparging mode
         sparge_pump_multiplier = float(config.config.sparge_circulate_distribution_work) / float(config.config.sparge_circulate_distribution_work + config.config.sparge_circulate_distribution_idle)
         mashstage = stage["mash"]
