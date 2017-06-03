@@ -1,5 +1,6 @@
 "Represents Pombru devices: Pumps, Valves and JamMakers."
 
+import logging
 import threading
 import time
 import config
@@ -107,6 +108,7 @@ class Heater(object):
             return self.__relay.get_value()
 
     def __timeout(self):
+        #logging.debug("heater timeout. cycle: " + str(self.__cycle) + ", power: " + str(self.__power))
         self.__cycle += 1
         if self.__cycle == 11:
             self.__cycle = 1
@@ -167,6 +169,7 @@ class JamMaker(object):
         self._target_temperature = target_temp
         self._status = JamMaker._STATUS_HEATING
         self._mode = JamMaker.MODE_CONTROLLED
+        self._pid.SetPoint = target_temp
 
     def get_mode(self):
         "Return the current mode operation of the jam maker."
@@ -184,6 +187,7 @@ class JamMaker(object):
         return self._target_temperature
 
     def _timeout(self):
+        #logging.debug("heater::timetout mode: " + str(self._mode))
         self._set_timer()
         if self._mode != JamMaker.MODE_CONTROLLED:
             return
@@ -191,6 +195,7 @@ class JamMaker(object):
 
     def _calc_heater_power(self):
         curr_temp = self.get_temperature()
+        #logging.debug("heater::calc_heater_power curr_temp: " + str(curr_temp) + ", status: " + str(self._status) + ", target: " + str(self._target_temperature))
         if self._target_temperature >= 100:
             # Boiling
             self._heater.set_power(100)
@@ -205,6 +210,7 @@ class JamMaker(object):
 
             self._pid.update(round(curr_temp))
             power = self._pid.output
+            #logging.debug("power: " + str(power))
             power = max(power, 0)
             power = min(power, 100)
             self._heater.set_power(power)
