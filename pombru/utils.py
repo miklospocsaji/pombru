@@ -35,7 +35,7 @@ class PausableTimer(object):
                 self._state = PausableTimer.State.FINISHED
                 start = True
         if start:
-            self._callback(self, *self._args, **self._kwargs)
+            self._callback(self, self.name, *self._args, **self._kwargs)
 
     def start(self):
         if self._state != PausableTimer.State.CREATED:
@@ -79,6 +79,12 @@ class PausableTimer(object):
                 return self._orig_timeout - (self._paused_at - self._started_at)
             else:
                 return -1
+
+    def __str__(self):
+        return "[PausableTimer: " + str(self.name) + "]"
+
+    def __repr__(self):
+        return self.__str__()
 
 if __name__ == "__main__":
     def callback():

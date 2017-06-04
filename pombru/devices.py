@@ -204,7 +204,8 @@ class JamMaker(object):
                 self._listener(self._target_temperature)
             return
         else:
-            if self._status == JamMaker._STATUS_HEATING and curr_temp >= self._target_temperature + 0.5:
+            temp_reached = (curr_temp >= self._target_temperature + 0.5) or (self._target_temperature == 100 and curr_temp >= 97.5)
+            if self._status == JamMaker._STATUS_HEATING and temp_reached:
                 self._status = JamMaker._STATUS_HOLDING
                 self._listener(self._target_temperature)
 
@@ -256,6 +257,9 @@ class Pump(object):
             self._state = Pump.STARTED
             if idle_sec > 0:
                 self._timer = threading.Timer(work_sec, self._idle)
+                self._timer.start()
+            else:
+                self._timer = None
 
     def stop(self):
         with self._lock:
