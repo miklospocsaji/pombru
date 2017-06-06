@@ -279,10 +279,12 @@ class Pump(object):
                 return
             self._relay.off()
             self._timer = threading.Timer(self._idle_sec, self._work)
-
+            self._timer.start()
+            
     def _work(self):
         with self._lock:
             if self._state == Pump.STOPPED:
                 return
             self._relay.on()
             self._timer = threading.Timer(self._work_sec, self._idle)
+            self._timer.start()
