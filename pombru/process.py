@@ -155,6 +155,7 @@ class BrewProcess(object):
     def next(self):
         for timer in self._timers:
             timer.cancel()
+        self._timers = []
         self._enter_stage(self._next_stage(self._brewing_stage))
 
     def get_status(self):
