@@ -5,7 +5,10 @@ class PombruConfig:
     CONFIG_FILE = "pombru.ini"
 
     SECTION_PUMPS = "pumps"
-    PROPERTY_SECONDS_PER_LITER = "SecondsPerLiter"
+    PROPERTY_SECONDS_PER_LITER_MASH_TO_TEMP = "SecondsPerLiterMashToTemp"
+    PROPERTY_SECONDS_PER_LITER_TEMP_TO_BOIL = "SecondsPerLiterTempToBoil"
+    PROPERTY_SECONDS_PER_LITER_BOIL_TO_TEMP = "SecondsPerLiterBoilToTemp"
+    PROPERTY_SECONDS_PER_LITER_BOIL_TO_MASH = "SecondsPerLiterBoilToMash"
     PROPERTY_MASH_CIRCULATE_DISTRIBUTION_WORK = "MashCirculateDistributionWork"
     PROPERTY_MASH_CIRCULATE_DISTRIBUTION_IDLE = "MashCirculateDistributionIdle"
     PROPERTY_SPARGE_CIRCULATE_DISTRIBUTION_WORK = "SpargeCirculateDistributionWork"
@@ -19,6 +22,7 @@ class PombruConfig:
     SECTION_PROCESS = "process"
     PROPERTY_SPARGING_TEMPERATURE = "SpargingTemperature"
     PROPERTY_SPARGING_CIRCULATE_SECS = "SpargingCirculateSecs"
+    PROPERTY_SPARGING_DELAY_BETWEEN_MASH_TO_TEMP_STAGES = "SpargingDelayBetweenMashToTempStages"
     PROPERTY_PAUSE = "Pause"
 
     SECTION_VALVES = "valves"
@@ -32,7 +36,10 @@ class PombruConfig:
         self.cp.read(PombruConfig.CONFIG_FILE)
 
         # Section "pumps"
-        self.pump_seconds_per_liter = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SECONDS_PER_LITER])
+        self.pump_seconds_per_liter_mash_to_temp = float(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SECONDS_PER_LITER_MASH_TO_TEMP])
+        self.pump_seconds_per_liter_temp_to_boil = float(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SECONDS_PER_LITER_TEMP_TO_BOIL])
+        self.pump_seconds_per_liter_boil_to_temp = float(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SECONDS_PER_LITER_BOIL_TO_TEMP])
+        self.pump_seconds_per_liter_boil_to_mash = float(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SECONDS_PER_LITER_BOIL_TO_MASH])
         self.mash_circulate_distribution_work = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_MASH_CIRCULATE_DISTRIBUTION_WORK])
         self.mash_circulate_distribution_idle = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_MASH_CIRCULATE_DISTRIBUTION_IDLE])
         self.sparge_circulate_distribution_work = int(self.cp[PombruConfig.SECTION_PUMPS][PombruConfig.PROPERTY_SPARGE_CIRCULATE_DISTRIBUTION_WORK])
@@ -41,6 +48,7 @@ class PombruConfig:
         # Section "process"
         self.sparging_temperature = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_TEMPERATURE])
         self.sparging_circulate_secs = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_CIRCULATE_SECS])
+        self.sparging_delay_between_mash_to_temp_stages = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_DELAY_BETWEEN_MASH_TO_TEMP_STAGES])
         self.pause = bool(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PAUSE])
 
         # Section "pid"
@@ -52,6 +60,3 @@ class PombruConfig:
         self.valve_settle_time_secs = int(self.cp[PombruConfig.SECTION_VALVES][PombruConfig.PROPERTY_VALVE_SETTLE_TIME_SECS])
 
 config = PombruConfig()
-
-if __name__ == '__main__':
-    print PombruConfig.PROPERTY_SECONDS_PER_LITER, config.pump_seconds_per_liter

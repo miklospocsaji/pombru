@@ -1,4 +1,5 @@
 "Various general purpose utilities."
+import logging
 import time
 import threading
 import urwid
@@ -35,7 +36,7 @@ class PausableTimer(object):
                 self._state = PausableTimer.State.FINISHED
                 start = True
         if start:
-            self._callback(self, self.name, *self._args, **self._kwargs)
+            self._callback(self, *self._args, **self._kwargs)
 
     def start(self):
         if self._state != PausableTimer.State.CREATED:
@@ -43,6 +44,7 @@ class PausableTimer(object):
         self._state = PausableTimer.State.STARTED
         self._started_at = time.time()
         self._timer.start()
+        logging.debug("Timer " + str(self.name) + " with timeout " + str(self._orig_timeout) + " started.")
 
     def cancel(self):
         with self._lock:
@@ -81,7 +83,7 @@ class PausableTimer(object):
                 return -1
 
     def __str__(self):
-        return "[PausableTimer: " + str(self.name) + "]"
+        return "[PausableTimer: " + str(self.name) + ", timeout: " + str(self._orig_timeout) + "]"
 
     def __repr__(self):
         return self.__str__()
@@ -108,15 +110,3 @@ if __name__ == "__main__":
         sec += 1
     rt.start()
     onesec()
-
-class SwitchingPadding(urwid.Padding):
-    "Class copied from https://github.com/urwid/urwid/blob/master/examples/bigtext.py"
-
-    def padding_values(self, size, focus):
-        maxcol = size[0]
-        width, _ = self.original_widget.pack(size, focus=focus)
-        if maxcol > width:
-            self.align = "left"
-        else:
-            self.align = "right"
-        return urwid.Padding.padding_values(self, size, focus)
