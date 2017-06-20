@@ -5,6 +5,7 @@ import logging
 import threading
 from time import sleep
 import traceback
+from pushnoti import notify
 
 import config
 import utils
@@ -42,11 +43,12 @@ class BrewStages(object):
     KEY_MASH_STAGE_NUM = "mash"
     KEY_NEXT_STAGE = "next"
     BOIL = {KEY_NAME: "Boiling wort", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: None}
-    SPARGE_TEMP_TO_BOIL = {KEY_NAME: "Transferring wort to boiling kettle", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: BOIL}
-    SPARGE_MASH_TO_TEMP_3 = {KEY_NAME: "Sparging - transferring wort to temporary III.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_TEMP_TO_BOIL}
+    SPARGE_TEMP_TO_BOIL_2 = {KEY_NAME: "Transferring wort to boiling kettle", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: BOIL}
+    SPARGE_MASH_TO_TEMP_3 = {KEY_NAME: "Sparging - transferring wort to temporary III.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_TEMP_TO_BOIL_2}
     SPARGE_PAUSE_2 = {KEY_NAME: "Second pause while sparging", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_3}
     SPARGE_CIRCULATE_IN_MASH_2 = {KEY_NAME: "Sparging - circulating in mash tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_PAUSE_2}
-    SPARGE_BOIL_TO_MASH_2 = {KEY_NAME: "Sparging - transferring water to mashing tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_CIRCULATE_IN_MASH_2}
+    SPARGE_TEMP_TO_BOIL_1 = {KEY_NAME: "Sparging - transferring part of wort from temp to boil", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_CIRCULATE_IN_MASH_2}
+    SPARGE_BOIL_TO_MASH_2 = {KEY_NAME: "Sparging - transferring water to mashing tun II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_TEMP_TO_BOIL_1}
     SPARGE_MASH_TO_TEMP_2 = {KEY_NAME: "Sparging - transferring wort to temporary II.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_BOIL_TO_MASH_2}
     SPARGE_PAUSE_1 = {KEY_NAME: "First pause while sparging", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_MASH_TO_TEMP_2}
     SPARGE_CIRCULATE_IN_MASH_1 = {KEY_NAME: "Sparging - circulating in mash tun I.", KEY_MASH_STAGE_NUM: 0, KEY_NEXT_STAGE: SPARGE_PAUSE_1}
@@ -112,10 +114,11 @@ class BrewProcess(object):
         self._stage_minutes[BrewStages.SPARGE_PAUSE_1["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_2["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_2["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
+        self._stage_minutes[BrewStages.SPARGE_TEMP_TO_BOIL_1["name"]] = (self.recipe.mash_water + self.recipe.sparge_water/2 - 1) * self._pump_seconds_per_liter_temp_to_boil + 60
         self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_2["name"]] = self._stage_minutes[BrewStages.SPARGE_CIRCULATE_IN_MASH_1["name"]]
         self._stage_minutes[BrewStages.SPARGE_PAUSE_2["name"]] = 0
         self._stage_minutes[BrewStages.SPARGE_MASH_TO_TEMP_3["name"]] = self._stage_minutes[BrewStages.SPARGE_BOIL_TO_MASH_1["name"]]
-        self._stage_minutes[BrewStages.SPARGE_TEMP_TO_BOIL["name"]] = (self.recipe.mash_water + self.recipe.sparge_water - 1) * self._pump_seconds_per_liter_temp_to_boil + 60
+        self._stage_minutes[BrewStages.SPARGE_TEMP_TO_BOIL_2["name"]] = (self.recipe.mash_water + self.recipe.sparge_water - 1) * self._pump_seconds_per_liter_temp_to_boil + 60
         self._stage_minutes[BrewStages.BOIL["name"]] = ((100 - self._sparging_temperature) / 2.0 + self.recipe.boiling_time) * 60
         logging.info("Stage minutes: " + str(self._stage_minutes))
 
@@ -277,6 +280,7 @@ class BrewProcess(object):
     #################################################
     def _enter_stage(self, stage):
         logging.info("enter stage: " + stage["name"])
+        notify("Entering stage: " + stage["name"])
         self.log_call_stack()
         pause_stage = stage in [BrewStages.SPARGE_PAUSE_1, BrewStages.SPARGE_PAUSE_2, BrewStages.MASHING_PAUSE]
         if not config.config.pause and pause_stage:
@@ -327,16 +331,21 @@ class BrewProcess(object):
         elif stage == BrewStages.SPARGE_BOIL_TO_MASH_2:
             self._sparge(self._get_pump_time_boil_to_mash(self.recipe.sparge_water / 2.0, True), boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
             self.actor.task(BrewTask(BrewTask.STOP_BOIL_KETTLE))
+        elif stage == BrewStages.SPARGE_TEMP_TO_BOIL_1:
+            self._sparge(self._get_pump_time_temp_to_boil(self.recipe.mash_water + self.recipe.sparge_water/2.0, True), temp_pump=True)
+            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, 99))
         elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_2:
             self._sparge(config.config.sparging_circulate_secs, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_3:
             self.actor.task(BrewTask(BrewTask.STOP_MASHING_TUN))
             self._sparge(self._get_pump_time_mash_to_temp(self.recipe.sparge_water / 2.0, True) * sparge_pump_multiplier, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP, param='SPARGE_DISTRIBUTION')
-        elif stage == BrewStages.SPARGE_TEMP_TO_BOIL:
+        elif stage == BrewStages.SPARGE_TEMP_TO_BOIL_2:
             self._sparge(self._get_pump_time_temp_to_boil(self.recipe.mash_water + self.recipe.sparge_water, True), temp_pump=True)
         elif stage == BrewStages.BOIL:
             self._stop_all()
             self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, 100))
+            # start preboil cycles (transfer remaining wort from mash->temp->boil)
+            self._preboil_cycle_start()
         elif pause_stage:
             pass
         else:
@@ -369,6 +378,9 @@ class BrewProcess(object):
             logging.info("boiler target reached: " + str(temp) + " stage: " + self._brewing_stage["name"])
             if self._brewing_stage == BrewStages.INITIAL:
                 return
+            if temp == 99:
+                logging.debug("99C reached while preheating wort in boiler, do nothing.")
+                return
             if temp == self._sparging_temperature:
                 self._sparging_water_ready = True
             if self._brewing_stage == BrewStages.WAIT_FOR_SPARGING_WATER:
@@ -377,6 +389,7 @@ class BrewProcess(object):
             elif self._brewing_stage == BrewStages.BOIL:
                 # Boiling
                 # TODO: hops
+                notify("Wort has reached 100 Celsius. Prepare your hops!")
                 timer = utils.PausableTimer(self.recipe.boiling_time * 60, self._boil_finished, name="boiler timer")
                 self._timers.append(timer)
                 timer.start()
@@ -412,9 +425,9 @@ class BrewProcess(object):
         with self._lock:
             self._set_valves_and_pumps(**kwargs)
             if 'mash_pump' in kwargs and kwargs['mash_pump'] and 'mash_valve' in kwargs and kwargs['mash_valve'] == BrewProcess._MASH_VALVE_TO_TEMP:
-                # This is from mash to temp. In this case, we pause the process at 75%
-                timer = utils.PausableTimer(waittime * 0.75, self._sparge_pause, "pumping 75% to temp", waittime * 0.25)
-                logging.debug("This is from mash to temp, pumping only 75% percent of the time, then there will be a pause")
+                # This is from mash to temp. In this case, we pause the process at 67%
+                timer = utils.PausableTimer(waittime * 0.67, self._sparge_pause, "pumping 67% to temp", waittime * 0.33)
+                logging.debug("This is from mash to temp, pumping only 67% percent of the time, then there will be a pause")
             else:
                 timer = utils.PausableTimer(waittime, self._enter_next_stage_on_timer, "sparging timer")
             self._timers.append(timer)
@@ -432,11 +445,50 @@ class BrewProcess(object):
     def _sparge_continue(self, timer, waittime, *_, **__):
         with self._lock:
             self._timers.remove(timer)
-            self._set_valves_and_pumps(mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
-            timer = utils.PausableTimer(waittime, self._enter_next_stage_on_timer, "pumping remaining 25% to temp")
+            self._set_valves_and_pumps(mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP, param='SPARGE_DISTRIBUTION')
+            timer = utils.PausableTimer(waittime, self._enter_next_stage_on_timer, "pumping remaining 33% to temp")
             self._timers.append(timer)
             timer.start()
             
+    # Pre-boil, mash->temp->boil
+
+    def _preboil_cycle_start(self):
+        if config.config.preboil_mash_to_temp_cycle > 0:
+            self._preboil_cycle_idle(None, config.config.preboil_mash_to_temp_cycle)
+
+    def _preboil_cycle_idle(self, timer, cycle_left, *_, **__):
+        # Preboil idle time up, wait
+        # If this is the last cycle, pump from temp to boil
+        with self._lock:
+            if timer is not None:
+                self._timers.remove(timer)
+            if cycle_left == 0:
+                # last cycle
+                self._set_valves_and_pumps(temp_pump=True)
+                timer = utils.PausableTimer(70, self._preboil_cycle_end, "Pumping remaining wort from temp to boil")
+                self._timers.append(timer)
+                timer.start()
+            else:
+                self._set_valves_and_pumps()
+                timer = utils.PausableTimer(config.config.preboil_mash_to_temp_period, self._preboil_cycle_pump, "Preboil idle cycle", cycle_left)
+                self._timers.append(timer)
+                timer.start()
+
+    def _preboil_cycle_pump(self, timer, cycle_left, *_, **__):
+        # Preboil next cycle, turn on mash pump
+        with self._lock:
+            self._timers.remove(timer)
+            self._set_valves_and_pumps(mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+            timer = utils.PausableTimer(10, self._preboil_cycle_idle, "pumping remaining wort from mash to temp", cycle_left - 1)
+            self._timers.append(timer)
+            timer.start()
+
+    def _preboil_cycle_end(self, timer, *_, **__):
+        with self._lock:
+            logging.info("Preboil cycles ended.")
+            self._timers.remove(timer)
+            self._set_valves_and_pumps()
+
     ################################################
     ## Boiling
     ################################################

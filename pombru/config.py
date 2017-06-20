@@ -24,6 +24,8 @@ class PombruConfig:
     PROPERTY_SPARGING_CIRCULATE_SECS = "SpargingCirculateSecs"
     PROPERTY_SPARGING_DELAY_BETWEEN_MASH_TO_TEMP_STAGES = "SpargingDelayBetweenMashToTempStages"
     PROPERTY_PAUSE = "Pause"
+    PROPERTY_PREBOIL_MASH_TO_TEMP_CYCLE = "PreBoilMashToTempCycle"
+    PROPERTY_PREBOIL_MASH_TO_TEMP_PERIOD = "PreBoilMashToTempPeriod"
 
     SECTION_VALVES = "valves"
     PROPERTY_VALVE_SETTLE_TIME_SECS = "SettleTimeSecs"
@@ -50,6 +52,8 @@ class PombruConfig:
         self.sparging_circulate_secs = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_CIRCULATE_SECS])
         self.sparging_delay_between_mash_to_temp_stages = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_DELAY_BETWEEN_MASH_TO_TEMP_STAGES])
         self.pause = bool(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PAUSE])
+        self.preboil_mash_to_temp_cycle = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_CYCLE])
+        self.preboil_mash_to_temp_period = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_PERIOD])
 
         # Section "pid"
         self.pid_proportional = float(self.cp[PombruConfig.SECTION_PID][PombruConfig.PROPERTY_PROPORTIONAL])
