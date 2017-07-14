@@ -67,7 +67,7 @@ class Heater(object):
     E.g. when the heater is told to work 30% then it is on for 3 seconds every 10 seconds.
     """
 
-    def __init__(self, pin, initial_power=0):
+    def __init__(self, pin, initial_power=0, name=None):
         "Only the pin is needed."
         self.__relay = Relay(pin)
         self.__lock = threading.RLock()
@@ -75,6 +75,7 @@ class Heater(object):
         self.__cycle = 0
         self.__timer = None
         self.__lock = threading.RLock()
+        self.__name = name
 
     def start(self):
         "Starts the heater."
@@ -116,8 +117,12 @@ class Heater(object):
             if self.__timer is None:
                 return
             if self.__cycle <= self.__power:
+                if not self.is_panel_on():
+                    logging.debug("Heater '" + str(self.__name) + "' relay ON")
                 self.__relay.on()
             else:
+                if self.is_panel_on():
+                    logging.debug("Heater '" + str(self.__name) + "' relay OFF")
                 self.__relay.off()
             self.__timer = threading.Timer(1, self.__timeout)
             self.__timer.start()
@@ -135,9 +140,9 @@ class JamMaker(object):
     _STATUS_HEATING = 1
     _STATUS_HOLDING = 2
 
-    def __init__(self, thermistor_channel, heater_panel_gpio_pin, listener=None, lock=None, **thermistor_spi_args):
+    def __init__(self, thermistor_channel, heater_panel_gpio_pin, listener=None, lock=None, name=None, **thermistor_spi_args):
         self._thermistor = Thermistor(thermistor_channel, sample_count=5, sample_delay=0.1, spi_args=thermistor_spi_args)
-        self._heater = Heater(heater_panel_gpio_pin)
+        self._heater = Heater(heater_panel_gpio_pin, name=name)
         self._mode = JamMaker.MODE_MANUAL_OFF
         self._listener = listener
         self._target_temperature = 0
