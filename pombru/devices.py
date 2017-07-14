@@ -251,6 +251,7 @@ class Pump(object):
         with self._lock:
             if self._state == Pump.STARTED:
                 return
+            self._state = Pump.STARTED
             if work_sec == None:
                 work_sec = self.default_work_sec
                 idle_sec = self.default_idle_sec
@@ -259,7 +260,6 @@ class Pump(object):
             if work_sec <= 0:
                 raise ValueError('work_sec must be positive!')
             self._relay.on()
-            self._state = Pump.STARTED
             if idle_sec > 0:
                 self._timer = threading.Timer(work_sec, self._idle)
                 self._timer.start()
@@ -270,19 +270,19 @@ class Pump(object):
         with self._lock:
             if self._state == Pump.STOPPED:
                 return
+            self._state = Pump.STOPPED
             self._relay.off()
             if self._timer is not None:
                 self._timer.cancel()
-            self._state = Pump.STOPPED
 
     def is_started(self):
         return self._state == Pump.STARTED
 
     def _idle(self):
         with self._lock:
+            self._relay.off()
             if self._state == Pump.STOPPED:
                 return
-            self._relay.off()
             self._timer = threading.Timer(self._idle_sec, self._work)
             self._timer.start()
             
