@@ -49,7 +49,10 @@ class Request:
 
         payload["k"] = PRIVATEKEY
         request = getattr(requests, request_type)(url, verify=False, params=payload)
-        self.answer = request.json()
+        try:
+            self.answer = request.json()
+        except ValueError as ve:
+            self.answer = str(ve)
 
     def __str__(self):
         return str(self.answer)
