@@ -1,11 +1,14 @@
 "REST API for Pombru brewer"
+import logging
+import threading
+
 from flask import Flask
 from flask_restful import Api, Resource, reqparse, abort
+
 import config
-import logging
 import brewery
-import devices
 import process
+import pushnoti
 import recipes
 
 BASE = '/pombru/api/v1'
@@ -137,6 +140,54 @@ class ConfigApi(Resource):
         self.brewery.reload_config()
         self.process.reload_config()
 
+_NOTIFY_TIMER = None
+class NotifyApi(Resource):
+    "REST api for push notification."
+
+    parser = reqparse.RequestParser()
+    parser.add_argument('command')
+
+    def __init__(self, prcss, mashtun, boiler):
+        self._process = prcss
+        self._mashtun = mashtun
+        self._boiler = boiler
+
+    def get(self):
+        return 'stopped' if _NOTIFY_TIMER is None else 'started'
+
+    def put(self):
+        args = NotifyApi.parser.parse_args()
+        logging.debug("NotifyApi args: " + str(args))
+        cmd = args['command']
+        if cmd == 'start':
+            self._stop()
+            self._start()
+        elif cmd == 'stop':
+            self._stop()
+        else:
+            logging.error("Invalid notify command: " + str(cmd))
+    
+    def _start(self):
+        self._send_push_notification()
+
+    def _stop(self):
+        global _NOTIFY_TIMER
+        if _NOTIFY_TIMER is not None:
+            _NOTIFY_TIMER.cancel()
+            _NOTIFY_TIMER = None
+
+    def _send_push_notification(self):
+        global _NOTIFY_TIMER
+        _NOTIFY_TIMER = threading.Timer(300, self._send_push_notification)
+        _NOTIFY_TIMER.start()
+        (_, stage, stage_remaining, process_remaining) = self._process.get_status()
+        mashtun_temp = self._mashtun.get_temperature()
+        boiler_temp = self._boiler.get_temperature()
+        msg = 'process stage: {:s}, mashtun temp: {:.1f}, boiler temp: {:.1f}, stage remaining: {:.0f}, process remaining: {:.0f}'.format(
+                stage['name'], mashtun_temp, boiler_temp, stage_remaining, process_remaining)
+        logging.debug("Periodic notification message is: " + msg)
+        pushnoti.notify(msg)
+
 class PombruRestApi(object):
     """Representation of Pombru REST API.
     Following devices should be passed:
@@ -162,6 +213,8 @@ class PombruRestApi(object):
         self._api.add_resource(TWValveApi, BASE + '/mashtunvalve', endpoint="mashtunvalve", resource_class_kwargs={'twvalve': brwry.mashtunvalve})
         self._api.add_resource(TWValveApi, BASE + '/boilervalve', endpoint="boilervalve", resource_class_kwargs={'twvalve': brwry.boilervalve})
         self._api.add_resource(ConfigApi, BASE + '/config', endpoint="config", resource_class_kwargs={'brwry': brwry, 'prcss': prcss})
+        self._api.add_resource(NotifyApi, BASE + '/notify', endpoint="notify",
+                resource_class_kwargs={'prcss': prcss, 'mashtun': brwry.mashtun, 'boiler': brwry.boiler})
 
     def start(self):
         self._app.run()
