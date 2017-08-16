@@ -79,6 +79,20 @@ def config_command(command):
         res = requests.put(url)
     print res.json() if res is not None else "ERR: unknown command '" + command + "'"
 
+def notify_command(command):
+    url = API_BASE + '/notify'
+    res = None
+    if command == 'status':
+        res = requests.get(url)
+    elif command == 'start':
+        res = requests.put(url, headers=CT_FORM, data='command=start')
+    elif command == 'stop':
+        res = requests.put(url, headers=CT_FORM, data='command=stop')
+    else:
+        print "Unknown command: " + str(command)
+        return
+    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("object", help="The object on which the command is executed")
@@ -102,6 +116,8 @@ def main():
         pump_command(o, c)
     elif o == 'config':
         config_command(c)
+    elif o == 'notify':
+        notify_command(c)
 
 if __name__ == "__main__":
     main()

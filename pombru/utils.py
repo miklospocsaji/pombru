@@ -2,7 +2,6 @@
 import logging
 import time
 import threading
-import urwid
 
 def enum(*args):
     """Creates an enumeration from the parameter values.

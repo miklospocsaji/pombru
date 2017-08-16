@@ -242,7 +242,7 @@ class BrewProcess(object):
             self._brewing_stage = BrewStages.INITIAL
             self._brewing_stage_started_at = None
             self._sparging_water_ready = False
-
+ 
     def _next_stage(self, stage):
         next_stage = stage["next"]
         mashstage = next_stage["mash"]
