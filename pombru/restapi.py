@@ -221,6 +221,7 @@ class PombruRestApi(object):
 
 if __name__ == "__main__":
     logging.basicConfig(filename='pombru.log', level=logging.DEBUG, format='%(asctime)s %(message)s')
+    pushnoti.pushnoti_init()
     r = recipes.from_config()
     p = process.BrewProcess(r)
     b = brewery.Brewery()

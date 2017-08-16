@@ -1,4 +1,5 @@
 "Send a push notification to my phone"
+import argparse
 import logging
 import sys
 
@@ -6,8 +7,15 @@ from pushsafer import init, Client
 import requests
 requests.packages.urllib3.disable_warnings()
 
-init("***REMOVED***")
-__CLIENT = Client("")
+__CLIENT = None
+def pushnoti_init():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pushsafer_key", required=True, type=str, help="PushSafer private key")
+    args = parser.parse_args()
+
+    init(args.pushsafer_key)
+    global __CLIENT
+    __CLIENT = Client("")
 
 def notify(msg):
     try:
