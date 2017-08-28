@@ -18,30 +18,30 @@ Derivative = 0.2
 
 [process]
 SpargingTemperature = 78
-SpargingCirculateSecs = 900
+SpargingCirculateSecs = 600
 # After pumped the 75% of the wort from mash to temp,
 # the brewery waits for this amount of seconds
 # for the wort to come through the grain
 SpargingDelayBetweenMashToTempStages = 240
-Pause = True
+Pause = False
 # PreBoil: when all available wort from mash is transferred to temp
 # and then to the boiler, it is possible that the spent grain still contains
 # valuable amount of wort
 # This wort can be saved by this feature: every PreBoilMashToTempPeriod seconds 
 # the mashtunpump pumps some wort to the temporary, this is repeated PreBoilMashToTempCycle
 # times. When this is finished, the temp pump is switched on for one minute
-PreBoilMashToTempCycle = 15
+PreBoilMashToTempCycle = 8
 PreBoilMashToTempPeriod = 120
 
 [recipe]
 MashStageCount = 2
 MashStage1Temp = 50
-MashStage1Min = 20
-MashStage2Temp = 68
-MashStage2Min = 90
-BoilingTime = 60
-MashWaterLiter = 13
-SpargeWaterLiter = 20
+MashStage1Min = 10
+MashStage2Temp = 65
+MashStage2Min = 75
+BoilingTime = 75
+MashWaterLiter = 15
+SpargeWaterLiter = 18
 HopCount = 0
 Hop1Time = 60
 Hop1Arm = 1
