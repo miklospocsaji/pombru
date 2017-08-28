@@ -209,7 +209,7 @@ class JamMaker(object):
                 self._listener(self._target_temperature)
             return
         else:
-            temp_reached = (curr_temp >= self._target_temperature + 0.5) or (self._target_temperature == 100 and curr_temp >= 97.5)
+            temp_reached = (curr_temp >= self._target_temperature + 0.5) or (self._target_temperature == 100 and curr_temp >= 97)
             if self._status == JamMaker._STATUS_HEATING and temp_reached:
                 self._status = JamMaker._STATUS_HOLDING
                 self._listener(self._target_temperature)
