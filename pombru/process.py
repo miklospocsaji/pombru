@@ -292,7 +292,7 @@ class BrewProcess(object):
         if stage == BrewStages.INITIAL:
             raise ValueError("Initial is not a valid stage to resume to.")
         elif stage == BrewStages.MASHING_PREPARE:
-            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, first_mash_temp))
+            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, first_mash_temp + 2))
         elif stage == BrewStages.MASHING_BOIL_TO_MASH:
             self._set_valves_and_pumps(boil_valve=BrewProcess._BOIL_VALVE_TO_MASH, boil_pump=True)
             timer = utils.PausableTimer(self._get_pump_time_boil_to_mash(
