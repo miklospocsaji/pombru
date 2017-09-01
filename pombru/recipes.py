@@ -2,8 +2,10 @@
 
 import config
 
+
 class Recipe(object):
     "Contains data needed for Pombru to brew a beer."
+
     def __init__(self, mash_stages=None, boiling_time=60, mash_water=15, sparge_water=20, hop_timing=None):
         """Constructor. The parameters are:
         mash_stages: array of (temperature, minutes) pairs
@@ -24,6 +26,11 @@ class Recipe(object):
         self.sparge_water = sparge_water
         self.hop_timing = hop_timing
 
+    def __str__(self):
+        return ("Recipe[mash stages: " + str(self.mash_stages) + ", boiling time: " +
+                str(self.boiling_time) + "min, mash water: " + str(self.mash_water) + "L, sparge water: " + str(self.sparge_water) + "L]")
+
+
 def from_config():
     cp = config.config.cp
     recipe = cp["recipe"]
@@ -38,8 +45,7 @@ def from_config():
     boiling_time = int(recipe["BoilingTime"])
     mash_water = int(recipe["MashWaterLiter"])
     sparge_water = int(recipe["SpargeWaterLiter"])
-    #TODO hop timing
+    # TODO hop timing
 
     ret = Recipe(mash_stages, boiling_time, mash_water, sparge_water)
     return ret
-
