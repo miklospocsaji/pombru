@@ -36,10 +36,10 @@ PreBoilMashToTempPeriod = 120
 [recipe]
 MashStageCount = 2
 MashStage1Temp = 50
-MashStage1Min = 10
+MashStage1Min = 20
 MashStage2Temp = 65
-MashStage2Min = 75
-BoilingTime = 75
+MashStage2Min = 60
+BoilingTime = 70
 MashWaterLiter = 15
 SpargeWaterLiter = 18
 HopCount = 0
