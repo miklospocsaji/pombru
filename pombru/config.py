@@ -51,7 +51,7 @@ class PombruConfig:
         self.sparging_temperature = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_TEMPERATURE])
         self.sparging_circulate_secs = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_CIRCULATE_SECS])
         self.sparging_delay_between_mash_to_temp_stages = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_SPARGING_DELAY_BETWEEN_MASH_TO_TEMP_STAGES])
-        self.pause = bool(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PAUSE])
+        self.pause = bool(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PAUSE].lower() == 'true')
         self.preboil_mash_to_temp_cycle = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_CYCLE])
         self.preboil_mash_to_temp_period = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_PERIOD])
 
