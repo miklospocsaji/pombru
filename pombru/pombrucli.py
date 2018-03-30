@@ -1,7 +1,7 @@
 import argparse
 import requests
 
-API_BASE = "http://brewery:5000/pombru/api/v1"
+API_BASE = "http://localhost:5000/pombru/api/v1"
 CT_FORM = {"Content-Type": "application/x-www-form-urlencoded"}
 
 def jammaker_command(jammaker, command, parameter=None):
