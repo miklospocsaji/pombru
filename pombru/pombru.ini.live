@@ -2,7 +2,7 @@
 SecondsPerLiterMashToTemp = 12
 SecondsPerLiterTempToBoil = 11
 SecondsPerLiterBoilToTemp = 8
-SecondsPerLiterBoilToMash = 7.5
+SecondsPerLiterBoilToMash = 6
 MashCirculateDistributionWork = 5
 MashCirculateDistributionIdle = 5
 SpargeCirculateDistributionWork = 5

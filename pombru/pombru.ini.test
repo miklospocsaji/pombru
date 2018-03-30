@@ -2,7 +2,7 @@
 SecondsPerLiterMashToTemp = 12
 SecondsPerLiterTempToBoil = 11
 SecondsPerLiterBoilToTemp = 8
-SecondsPerLiterBoilToMash = 7.5
+SecondsPerLiterBoilToMash = 6
 MashCirculateDistributionWork = 5
 MashCirculateDistributionIdle = 5
 SpargeCirculateDistributionWork = 5
@@ -23,7 +23,7 @@ SpargingCirculateSecs = 600
 # the brewery waits for this amount of seconds
 # for the wort to come through the grain
 SpargingDelayBetweenMashToTempStages = 120
-Pause = True
+Pause = False
 # PreBoil: when all available wort from mash is transferred to temp
 # and then to the boiler, it is possible that the spent grain still contains
 # valuable amount of wort
