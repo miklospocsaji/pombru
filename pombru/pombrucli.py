@@ -1,12 +1,13 @@
 import argparse
 import requests
 
-API_BASE = "http://localhost:5000/pombru/api/v1"
+API_BASE = "http://brewery:5000/pombru/api/v1"
 CT_FORM = {"Content-Type": "application/x-www-form-urlencoded"}
 
 def jammaker_command(jammaker, command, parameter=None):
     url = API_BASE + "/" + jammaker
     res = None
+    data = ''
     if command == 'on':
         res = requests.put(url, headers=CT_FORM, data="mode=on")
     elif command == 'off':
@@ -15,7 +16,8 @@ def jammaker_command(jammaker, command, parameter=None):
         res = requests.get(url)
     elif command == 'target':
         res = requests.put(url, headers=CT_FORM, data="mode=controlled&target=" + str(parameter))
-
+        data="mode=controlled&target=" + str(parameter)
+    print data
     print res.json() if res is not None else "ERR: unknown command '" + command + "'"
 
 def process_command(command, stage=None):
