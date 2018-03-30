@@ -30,7 +30,7 @@ Pause = False
 # This wort can be saved by this feature: every PreBoilMashToTempPeriod seconds 
 # the mashtunpump pumps some wort to the temporary, this is repeated PreBoilMashToTempCycle
 # times. When this is finished, the temp pump is switched on for one minute
-PreBoilMashToTempCycle = 3
+PreBoilMashToTempCycle = 0
 PreBoilMashToTempPeriod = 120
 
 [recipe]
