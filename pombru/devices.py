@@ -219,7 +219,7 @@ class JamMaker(object):
             power = self._pid.output
             #logging.debug("power: " + str(power))
             power = max(power, 0)
-            power = min(power, self.power_cap)
+            if (self._target_temperature < 100): power = min(power, self.power_cap)
             self._heater.set_power(power)
 
     def _set_timer(self):
