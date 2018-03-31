@@ -152,6 +152,7 @@ class JamMaker(object):
         self._lock = lock
         self.reload_config()
         self._set_timer()
+        self.power_cap = 100
 
     def reload_config(self):
         self._pid = PID(config.config.pid_proportional, config.config.pid_integral, config.config.pid_derivative)
@@ -218,7 +219,7 @@ class JamMaker(object):
             power = self._pid.output
             #logging.debug("power: " + str(power))
             power = max(power, 0)
-            power = min(power, 100)
+            power = min(power, self.power_cap)
             self._heater.set_power(power)
 
     def _set_timer(self):
