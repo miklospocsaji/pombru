@@ -286,6 +286,7 @@ class BrewProcess(object):
         if not config.config.pause and pause_stage:
             logging.info("Pausing not enabled by config, skipping automatically to next stage")
             self._enter_stage(stage[BrewStages.KEY_NEXT_STAGE])
+            return
         mashstage = stage["mash"]
         first_mash_temp = self.recipe.mash_stages[0][0]
         self._brewing_stage_started_at = datetime.datetime.utcnow()
