@@ -1,6 +1,6 @@
 [pumps]
 SecondsPerLiterMashToTemp = 12
-SecondsPerLiterTempToBoil = 11
+SecondsPerLiterTempToBoil = 15
 SecondsPerLiterBoilToTemp = 8
 SecondsPerLiterBoilToMash = 6
 MashCirculateDistributionWork = 5
@@ -17,7 +17,7 @@ Integral = 3
 Derivative = 0.2
 
 [process]
-SpargingTemperature = 77
+SpargingTemperature = 76
 SpargingCirculateSecs = 420
 # After pumped the 75% of the wort from mash to temp,
 # the brewery waits for this amount of seconds
@@ -35,12 +35,14 @@ PreBoilMashToTempPeriod = 120
 
 [recipe]
 MashStageCount = 2
-MashStage1Temp = 52
+MashStage1Temp = 54
 MashStage1Min = 10
-MashStage2Temp = 66
+MashStage2Temp = 67
 MashStage2Min = 60
-BoilingTime = 60
-MashWaterLiter = 16
+MashStage2Temp = 76
+MashStage2Min = 10
+BoilingTime = 75
+MashWaterLiter = 17
 SpargeWaterLiter = 16
 HopCount = 0
 Hop1Time = 60
