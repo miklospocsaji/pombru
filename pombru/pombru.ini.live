@@ -1,6 +1,6 @@
 [pumps]
-SecondsPerLiterMashToTemp = 12
-SecondsPerLiterTempToBoil = 15
+SecondsPerLiterMashToTemp = 15
+SecondsPerLiterTempToBoil = 20
 SecondsPerLiterBoilToTemp = 8
 SecondsPerLiterBoilToMash = 6
 MashCirculateDistributionWork = 5
