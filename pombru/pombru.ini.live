@@ -36,16 +36,16 @@ PreBoilMashToTempPeriod = 120
 TransferMode = MANUAL
 
 [recipe]
-MashStageCount = 2
-MashStage1Temp = 54
-MashStage1Min = 10
+MashStageCount = 1
+MashStage1Temp = 69
+MashStage1Min = 75
 MashStage2Temp = 69
 MashStage2Min = 60
 MashStage3Temp = 76
 MashStage3Min = 10
 BoilingTime = 60
-MashWaterLiter = 17
-SpargeWaterLiter = 16
+MashWaterLiter = 18
+SpargeWaterLiter = 15
 HopCount = 0
 Hop1Time = 60
 Hop1Arm = 1
