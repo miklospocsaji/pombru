@@ -26,6 +26,7 @@ class PombruConfig:
     PROPERTY_PAUSE = "Pause"
     PROPERTY_PREBOIL_MASH_TO_TEMP_CYCLE = "PreBoilMashToTempCycle"
     PROPERTY_PREBOIL_MASH_TO_TEMP_PERIOD = "PreBoilMashToTempPeriod"
+    PROPERTY_TRANSFER_MODE = "TransferMode"
 
     SECTION_VALVES = "valves"
     PROPERTY_VALVE_SETTLE_TIME_SECS = "SettleTimeSecs"
@@ -54,6 +55,7 @@ class PombruConfig:
         self.pause = bool(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PAUSE].lower() == 'true')
         self.preboil_mash_to_temp_cycle = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_CYCLE])
         self.preboil_mash_to_temp_period = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_PERIOD])
+        self.transfer_mode = self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_TRANSFER_MODE]
 
         # Section "pid"
         self.pid_proportional = float(self.cp[PombruConfig.SECTION_PID][PombruConfig.PROPERTY_PROPORTIONAL])

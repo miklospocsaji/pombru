@@ -19,12 +19,12 @@ def pushnoti_init():
 
 def notify(msg):
     try:
-        resp = __CLIENT.send_message(msg, "PomBru", "13148", "1", "4", "2", "https://www.pushsafer.com", "Open Pushsafer", "0", "", "", "")
+        resp = __CLIENT.send_message(msg, "PomBru", "36659", "1", "4", "2", "https://www.pushsafer.com", "Open Pushsafer", "0", "", "", "")
         logging.debug("response for push notification '" + msg + "' is: " + str(resp))
     except:
         logging.error("Error while sending push notification: " + sys.exc_info()[0])
 
 if __name__ == "__main__":
-    print "trying to send test message"
+    print("trying to send test message")
     pushnoti_init()
     notify("hello")

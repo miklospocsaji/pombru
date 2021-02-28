@@ -131,8 +131,10 @@ class BrewProcess(object):
         "Starts the brewing process."
         self._enter_stage(BrewStages.INITIAL["next"])
         # Set up timer to start heating the sparging water
-        total_mash_time = functools.reduce(lambda sum, (_, y): sum + y, self.recipe.mash_stages, 0)
-        logging.debug("Total mash time: %d minutes", total_mash_time)
+
+        # Commented out, does not work with python3:
+        #total_mash_time = functools.reduce(lambda sum, (_, y): sum + y, self.recipe.mash_stages, 0)
+        #logging.debug("Total mash time: %d minutes", total_mash_time)
 
     def stop(self):
         self._reset()
@@ -293,14 +295,17 @@ class BrewProcess(object):
         if stage == BrewStages.INITIAL:
             raise ValueError("Initial is not a valid stage to resume to.")
         elif stage == BrewStages.MASHING_PREPARE:
-            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, first_mash_temp + 2))
+            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, first_mash_temp + 5))
         elif stage == BrewStages.MASHING_BOIL_TO_MASH:
-            self._set_valves_and_pumps(boil_valve=BrewProcess._BOIL_VALVE_TO_MASH, boil_pump=True)
-            timer = utils.PausableTimer(self._get_pump_time_boil_to_mash(
-                self.recipe.mash_water, True), self._enter_next_stage_on_timer, name='timer: mash water from boil to mash')
-            self._timers.append(timer)
-            timer.start()
-            #self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, first_mash_temp))
+            if config.config.transfer_mode == "MANUAL":
+                notify("Water is ready in boiler. Please transfer manually to mash tun and hit next.")
+            else:
+                self._set_valves_and_pumps(boil_valve=BrewProcess._BOIL_VALVE_TO_MASH, boil_pump=True)
+                timer = utils.PausableTimer(self._get_pump_time_boil_to_mash(
+                    self.recipe.mash_water, True), self._enter_next_stage_on_timer, name='timer: mash water from boil to mash')
+                self._timers.append(timer)
+                timer.start()
+                #self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, first_mash_temp))
         elif stage == BrewStages.MASHING_TEMP_TO_BOIL:
             self._set_valves_and_pumps(temp_pump=True)
             timer = utils.PausableTimer(self._get_pump_time_temp_to_boil(
@@ -504,4 +509,4 @@ class BrewProcess(object):
         logging.debug("timers: " + str(self._timers))
 
 if __name__ == "__main__":
-    print BrewStages.INITIAL
+    print(BrewStages.INITIAL)

@@ -32,6 +32,8 @@ Pause = False
 # times. When this is finished, the temp pump is switched on for one minute
 PreBoilMashToTempCycle = 0
 PreBoilMashToTempPeriod = 120
+# MANUAL or AUTOMATIC
+TransferMode = MANUAL
 
 [recipe]
 MashStageCount = 2

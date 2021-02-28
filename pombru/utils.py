@@ -89,15 +89,15 @@ class PausableTimer(object):
 
 if __name__ == "__main__":
     def callback():
-        print "callback!"
+        print("callback!")
     rt = PausableTimer(5, callback)
     sec = 0
     def pause():
         rt.pause()
-        print "paused"
+        print("paused")
     def resume():
         rt.resume()
-        print "resumed"
+        print("resumed")
     def onesec():
         threading.Timer(1, onesec).start()
         global sec
@@ -105,7 +105,7 @@ if __name__ == "__main__":
             pause()
         if sec == 14:
             resume()
-        print sec
+        print(sec)
         sec += 1
     rt.start()
     onesec()

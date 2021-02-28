@@ -17,8 +17,8 @@ def jammaker_command(jammaker, command, parameter=None):
     elif command == 'target':
         res = requests.put(url, headers=CT_FORM, data="mode=controlled&target=" + str(parameter))
         data="mode=controlled&target=" + str(parameter)
-    print data
-    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+    print(data)
+    print(res.json() if res is not None else "ERR: unknown command '" + command + "'")
 
 def process_command(command, stage=None):
     url = API_BASE + "/process"
@@ -35,21 +35,21 @@ def process_command(command, stage=None):
     elif command == 'continue_with':
         res = processput('command=continue_with', 'stage=' + stage)
 
-    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+    print(res.json() if res is not None else "ERR: unknown command '" + command + "'")
 
 def all_command(command):
     if command == 'status':
-        print "PROCESS:"
+        print("PROCESS:")
         process_command('status')
-        print "MASH TUN:"
+        print("MASH TUN:")
         jammaker_command('mashtun', 'status')
         twvalve_command('mashtunvalve', 'status')
         pump_command('mashtunpump', 'status')
-        print "BOILER:"
+        print("BOILER:")
         jammaker_command('boiler', 'status')
         twvalve_command('boilervalve', 'status')
         pump_command('boilerpump', 'status')
-        print "TEMPORARY:"
+        print("TEMPORARY:")
         pump_command('temppump', 'status')
 
 def twvalve_command(valve, command, target=None):
@@ -59,7 +59,7 @@ def twvalve_command(valve, command, target=None):
         res = requests.get(url)
     elif command == 'target':
         res = requests.put(url, headers=CT_FORM, data="target=" + target)
-    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+    print(res.json() if res is not None else "ERR: unknown command '" + command + "'")
 
 def pump_command(pump, command):
     url = API_BASE + '/' + pump
@@ -70,7 +70,7 @@ def pump_command(pump, command):
         res = requests.put(url, headers=CT_FORM, data="status=on")
     elif command == 'off':
         res = requests.put(url, headers=CT_FORM, data="status=off")
-    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+    print(res.json() if res is not None else "ERR: unknown command '" + command + "'")
 
 def config_command(command):
     url = API_BASE + '/config'
@@ -79,7 +79,7 @@ def config_command(command):
         res = requests.get(url)
     elif command == 'reload':
         res = requests.put(url)
-    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+    print(res.json() if res is not None else "ERR: unknown command '" + command + "'")
 
 def notify_command(command):
     url = API_BASE + '/notify'
@@ -91,9 +91,9 @@ def notify_command(command):
     elif command == 'stop':
         res = requests.put(url, headers=CT_FORM, data='command=stop')
     else:
-        print "Unknown command: " + str(command)
+        print("Unknown command: " + str(command))
         return
-    print res.json() if res is not None else "ERR: unknown command '" + command + "'"
+    print(res.json() if res is not None else "ERR: unknown command '" + command + "'")
 
 def main():
     parser = argparse.ArgumentParser()

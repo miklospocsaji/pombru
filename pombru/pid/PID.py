@@ -137,5 +137,5 @@ if __name__ == "__main__":
     while line != 'q':
         line = float(line)
         pid.update(line)
-        print pid.output
+        print(pid.output)
         line = raw_input()

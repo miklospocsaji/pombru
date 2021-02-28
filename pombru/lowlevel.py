@@ -1,5 +1,6 @@
 """ Low-level classes and functions for Pombru Python Brewing System"""
 import math
+import os
 import random
 import threading
 from gpiozero import OutputDevice
@@ -10,9 +11,12 @@ class Relay(object):
 
     def __init__(self, pin):
         """ Relay constructor takes a pin argument only"""
+        self.__mock = os.getenv('GPIOZERO_PIN_FACTORY') == 'mock'
         try:
-            self.__device = OutputDevice(pin=pin, active_high=False, initial_value=False)
-            self.__mock = False
+            if not self.__mock:
+                self.__device = OutputDevice(pin=pin, active_high=False, initial_value=False)
+            else:
+                self.__is_on = False
         except IOError as _:
             self.__mock = True
             self.__is_on = False
@@ -62,7 +66,10 @@ class Thermistor(object):
         if spi_args is None:
             spi_args = Thermistor.__DEFAULT_SPI_ARGS
         try:
-            self.__ic = MCP3208(channel=channel, differential=False, **spi_args)
+            if os.getenv('GPIOZERO_PIN_FACTORY') != 'mock':
+                self.__ic = MCP3208(channel=channel, differential=False, **spi_args)
+            else:
+                self.__ic = None
         except IOError as _:
             self.__ic = None
         self.__sample_count = sample_count
