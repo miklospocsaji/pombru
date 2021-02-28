@@ -38,9 +38,9 @@ TransferMode = MANUAL
 [recipe]
 MashStageCount = 2
 MashStage1Temp = 50
-MashStage1Min = 20
+MashStage1Min = 1
 MashStage2Temp = 70
-MashStage2Min = 60
+MashStage2Min = 1
 #MashStage3Temp = 68
 #MashStage3Min = 45
 #MashStage4Temp = 74
