@@ -283,7 +283,7 @@ class BrewProcess(object):
     def _enter_stage(self, stage):
         logging.info("enter stage: " + stage["name"])
         notify("Entering stage: " + stage["name"])
-        self.log_call_stack()
+        #self.log_call_stack()
         pause_stage = stage in [BrewStages.SPARGE_PAUSE_1, BrewStages.SPARGE_PAUSE_2, BrewStages.MASHING_PAUSE]
         if not config.config.pause and pause_stage:
             logging.info("Pausing not enabled by config, skipping automatically to next stage")
@@ -310,12 +310,12 @@ class BrewProcess(object):
             if config.config.transfer_mode == "MANUAL":
                 # this is not used in manual mode, go to next stage
                 self._enter_stage(stage["next"])
-            else:
-                self._set_valves_and_pumps(temp_pump=True)
-                timer = utils.PausableTimer(self._get_pump_time_temp_to_boil(
-                    self.recipe.sparge_water, True), self._enter_next_stage_on_timer, name='timer: sparging water from temp to boil')
-                self._timers.append(timer)
-                timer.start()
+                return
+            self._set_valves_and_pumps(temp_pump=True)
+            timer = utils.PausableTimer(self._get_pump_time_temp_to_boil(
+                self.recipe.sparge_water, True), self._enter_next_stage_on_timer, name='timer: sparging water from temp to boil')
+            self._timers.append(timer)
+            timer.start()
         elif mashstage > 0:
             if mashstage == 1:
                 self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, self._sparging_temperature))
@@ -327,34 +327,51 @@ class BrewProcess(object):
                 return # to avoid setting the brewing stage at the end...
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_1:
             if config.config.transfer_mode == "MANUAL":
-                self._set_valves_and_pumps()
                 notify("Mashing ended. Please 1) transfer wort from mash to temporary 2) half of the sparging water from bolier to mash tun.")
+                self._set_valves_and_pumps()
             else:
                 self._sparge(self._get_pump_time_mash_to_temp(self.recipe.mash_water, True), mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
         elif stage == BrewStages.SPARGE_BOIL_TO_MASH_1:
             if config.config.transfer_mode == "MANUAL":
                 self._enter_stage(stage["next"])
-            else:
-                self._sparge(self._get_pump_time_boil_to_mash(self.recipe.sparge_water / 2.0, False), boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
-                self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, config.config.sparging_temperature))
+                return
+            self._sparge(self._get_pump_time_boil_to_mash(self.recipe.sparge_water / 2.0, False), boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
+            self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, config.config.sparging_temperature))
         elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_1:
             self._sparge(config.config.sparging_circulate_secs, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_PAUSE_1 or stage == BrewStages.SPARGE_PAUSE_2:
             self._set_valves_and_pumps(mash_valve=None, boil_valve=None)
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_2:
-            self._sparge(self._get_pump_time_mash_to_temp(self.recipe.sparge_water / 2.0, True), mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+            if config.config.transfer_mode == "MANUAL":
+                notify("1st stage sparging ended. Please 1) transfer wort from mash to temporary 2) other half of the sparging water from bolier to mash tun. 3) wort from temporary to boiler, and start heating up")
+                self._set_valves_and_pumps()
+            else:
+                self._sparge(self._get_pump_time_mash_to_temp(self.recipe.sparge_water / 2.0, True), mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
         elif stage == BrewStages.SPARGE_BOIL_TO_MASH_2:
+            if config.config.transfer_mode == "MANUAL":
+                self._enter_stage(stage["next"])
+                return
             self._sparge(self._get_pump_time_boil_to_mash(self.recipe.sparge_water / 2.0, True), boil_pump=True, boil_valve=BrewProcess._BOIL_VALVE_TO_MASH)
             self.actor.task(BrewTask(BrewTask.STOP_BOIL_KETTLE))
         elif stage == BrewStages.SPARGE_TEMP_TO_BOIL_1:
+            if config.config.transfer_mode == "MANUAL":
+                self._enter_stage(stage["next"])
+                return
             self._sparge(self._get_pump_time_temp_to_boil(self.recipe.mash_water + self.recipe.sparge_water/2.0, True), temp_pump=True)
             self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, 99))
         elif stage == BrewStages.SPARGE_CIRCULATE_IN_MASH_2:
             self._sparge(config.config.sparging_circulate_secs, mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_MASH, param='SPARGE_DISTRIBUTION')
         elif stage == BrewStages.SPARGE_MASH_TO_TEMP_3:
-            self.actor.task(BrewTask(BrewTask.STOP_MASHING_TUN))
-            self._sparge(self._get_pump_time_mash_to_temp(self.recipe.sparge_water / 2.0, True), mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
+            if config.config.transfer_mode == "MANUAL":
+                notify("2nd stage sparging ended. Please transfer wort from mash to boiler")
+                self._set_valves_and_pumps()
+            else:
+                self.actor.task(BrewTask(BrewTask.STOP_MASHING_TUN))
+                self._sparge(self._get_pump_time_mash_to_temp(self.recipe.sparge_water / 2.0, True), mash_pump=True, mash_valve=BrewProcess._MASH_VALVE_TO_TEMP)
         elif stage == BrewStages.SPARGE_TEMP_TO_BOIL_2:
+            if config.config.transfer_mode == "MANUAL":
+                self._enter_stage(stage["next"])
+                return
             self._sparge(self._get_pump_time_temp_to_boil(self.recipe.mash_water + self.recipe.sparge_water, True), temp_pump=True)
         elif stage == BrewStages.BOIL:
             self._stop_all()

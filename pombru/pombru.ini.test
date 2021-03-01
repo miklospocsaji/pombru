@@ -18,7 +18,7 @@ Derivative = 0.2
 
 [process]
 SpargingTemperature = 78
-SpargingCirculateSecs = 600
+SpargingCirculateSecs = 30
 # After pumped the 75% of the wort from mash to temp,
 # the brewery waits for this amount of seconds
 # for the wort to come through the grain
