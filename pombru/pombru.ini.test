@@ -34,6 +34,9 @@ PreBoilMashToTempCycle = 0
 PreBoilMashToTempPeriod = 120
 # MANUAL or AUTOMATIC
 TransferMode = MANUAL
+# Where to start heating up the water. MASHTUN or BOILER
+# The value MASHTUN is taken into account only when TransferMode = MANUAL
+MashStart = MASHTUN
 
 [recipe]
 MashStageCount = 2

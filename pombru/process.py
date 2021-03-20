@@ -295,10 +295,16 @@ class BrewProcess(object):
         if stage == BrewStages.INITIAL:
             raise ValueError("Initial is not a valid stage to resume to.")
         elif stage == BrewStages.MASHING_PREPARE:
-            self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, first_mash_temp + 5))
+            if config.config.mash_start == 'BOILER':
+                self.actor.task(BrewTask(BrewTask.BOIL_TARGET_TEMP, first_mash_temp + 5))
+            else:
+                self.actor.task(BrewTask(BrewTask.MASH_TARGET_TEMP, first_mash_temp + 5))
         elif stage == BrewStages.MASHING_BOIL_TO_MASH:
             if config.config.transfer_mode == "MANUAL":
-                notify("Water is ready in boiler. Please transfer manually to mash tun, move the water from temporary to boiler and hit next.")
+                if config.config.mash_start == "BOILER":
+                    notify("Water is ready in boiler. Please transfer manually to mash tun, move the water from temporary to boiler and hit next.")
+                else:
+                    notify("Water is ready in mash tun. Infuse the malt")
             else:
                 self._set_valves_and_pumps(boil_valve=BrewProcess._BOIL_VALVE_TO_MASH, boil_pump=True)
                 timer = utils.PausableTimer(self._get_pump_time_boil_to_mash(
@@ -394,6 +400,8 @@ class BrewProcess(object):
             if self._brewing_stage == BrewStages.INITIAL:
                 logging.info("--> This is the initial stage, do nothing")
                 return
+            elif self._brewing_stage == BrewStages.MASHING_PREPARE and config.config.mash_start == 'MASHTUN':
+                self._enter_stage(self._brewing_stage["next"])
             elif temp == config.config.sparging_temperature:
                 logging.info("--> Sparging temperature reached in mashtun as well, do nothing")
                 return
@@ -427,7 +435,7 @@ class BrewProcess(object):
                 timer.start()
                 # Update remaining time
                 self._stage_minutes[self._brewing_stage["name"]] = self.recipe.boiling_time * 60
-            elif self._brewing_stage == BrewStages.MASHING_PREPARE:
+            elif self._brewing_stage == BrewStages.MASHING_PREPARE and config.config.mash_start == 'BOILER':
                 self._enter_stage(self._brewing_stage["next"])
 
     def _enter_next_stage_on_timer(self, timer, *_, **__):

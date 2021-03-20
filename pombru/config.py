@@ -27,6 +27,7 @@ class PombruConfig:
     PROPERTY_PREBOIL_MASH_TO_TEMP_CYCLE = "PreBoilMashToTempCycle"
     PROPERTY_PREBOIL_MASH_TO_TEMP_PERIOD = "PreBoilMashToTempPeriod"
     PROPERTY_TRANSFER_MODE = "TransferMode"
+    PROPERTY_MASH_START = "MashStart"
 
     SECTION_VALVES = "valves"
     PROPERTY_VALVE_SETTLE_TIME_SECS = "SettleTimeSecs"
@@ -56,6 +57,13 @@ class PombruConfig:
         self.preboil_mash_to_temp_cycle = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_CYCLE])
         self.preboil_mash_to_temp_period = int(self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_PREBOIL_MASH_TO_TEMP_PERIOD])
         self.transfer_mode = self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_TRANSFER_MODE]
+        if self.transfer_mode not in ['AUTOMATIC', 'MANUAL']:
+            raise ValueError('process.transferMode invalid value: ' + self.transfer_mode)
+        self.mash_start = self.cp[PombruConfig.SECTION_PROCESS][PombruConfig.PROPERTY_MASH_START]
+        if self.mash_start not in ['MASHTUN', 'BOILER']:
+            raise ValueError("process.mashStart invalid value: " + self.mash_start)
+        if self.mash_start == 'MASHTUN' and self.transfer_mode == 'AUTOMATIC':
+            self.mash_start = 'BOILER'
 
         # Section "pid"
         self.pid_proportional = float(self.cp[PombruConfig.SECTION_PID][PombruConfig.PROPERTY_PROPORTIONAL])
