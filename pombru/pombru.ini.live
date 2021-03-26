@@ -40,7 +40,7 @@ MashStart = MASHTUN
 
 [recipe]
 MashStageCount = 1
-MashStage1Temp = 69
+MashStage1Temp = 67
 MashStage1Min = 75
 MashStage2Temp = 69
 MashStage2Min = 60
