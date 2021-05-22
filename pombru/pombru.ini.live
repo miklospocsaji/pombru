@@ -39,11 +39,11 @@ TransferMode = MANUAL
 MashStart = MASHTUN
 
 [recipe]
-MashStageCount = 1
+MashStageCount = 2
 MashStage1Temp = 67
-MashStage1Min = 75
-MashStage2Temp = 69
-MashStage2Min = 60
+MashStage1Min = 60
+MashStage2Temp = 76
+MashStage2Min = 15
 MashStage3Temp = 76
 MashStage3Min = 10
 BoilingTime = 60
